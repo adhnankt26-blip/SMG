@@ -4642,6 +4642,7 @@
                 <button
                   type="button"
                   id="btnDirectCakeOrderWhatsApp"
+                  onclick="handleDirectCakeOrderWhatsApp()"
                   class="btn-wa-order"
                   style="
                     height: 48px;
@@ -7831,6 +7832,7 @@
           <button
             type="button"
             id="btnConfirmBuyNow"
+            onclick="handleConfirmBuyNow()"
             class="btn-wa-order"
             style="
               width: 100%;
@@ -14471,251 +14473,291 @@
       }
 
       function handleConfirmBuyNow() {
-        if (!buyNowTargetPhoto) return;
-        const isCake = isCakeCatalogTarget(buyNowTargetPhoto);
-        const photoMoqStr =
-          (buyNowTargetPhoto.minOrderQty &&
-            String(buyNowTargetPhoto.minOrderQty).trim()) ||
-          "1 Kg";
-
-        if (isCake && isMentionWeightActive) {
-          const customWeightInput = document.getElementById(
-            "buyNowCustomWeightInput",
-          );
-          let customVal = parseFloat(
-            customWeightInput ? customWeightInput.value : "",
-          );
-          if (isNaN(customVal) || customVal <= 0) {
-            alert(
-              "Please enter a valid cake weight in kilograms (e.g. 5.5, 6.0, 6.5, 7.0 Kg).",
-            );
-            customWeightInput?.focus();
+        try {
+          if (!buyNowTargetPhoto) {
+            alert("Please choose a cake to place an order.");
             return;
           }
-          const snapped = Math.max(0.5, Math.round(customVal * 2) / 2);
-          if (Math.abs(customVal - snapped) > 0.001) {
-            customVal = snapped;
-            if (customWeightInput) {
-              customWeightInput.value =
-                snapped % 1 === 0 ? snapped.toFixed(1) : String(snapped);
+          const isCake = isCakeCatalogTarget(buyNowTargetPhoto);
+          const photoMoqStr =
+            (buyNowTargetPhoto.minOrderQty &&
+              String(buyNowTargetPhoto.minOrderQty).trim()) ||
+            "1 Kg";
+
+          if (isCake && isMentionWeightActive) {
+            const customWeightInput = document.getElementById(
+              "buyNowCustomWeightInput",
+            );
+            let customVal = parseFloat(
+              customWeightInput ? customWeightInput.value : "",
+            );
+            if (isNaN(customVal) || customVal <= 0) {
+              alert(
+                "Please enter a valid cake weight in kilograms (e.g. 5.5, 6.0, 6.5, 7.0 Kg).",
+              );
+              customWeightInput?.focus();
+              return;
+            }
+            const snapped = Math.max(0.5, Math.round(customVal * 2) / 2);
+            if (Math.abs(customVal - snapped) > 0.001) {
+              customVal = snapped;
+              if (customWeightInput) {
+                customWeightInput.value =
+                  snapped % 1 === 0 ? snapped.toFixed(1) : String(snapped);
+              }
+            }
+            selectedWeight = `${customVal} Kg`;
+          }
+
+          const minAllowedKg = isCake ? 0.5 : parseWeightToKg(photoMoqStr);
+          const chosenKg = parseWeightToKg(selectedWeight);
+
+          if (isCake && chosenKg <= 1.0) {
+            selectedCakeShape = "Round";
+          }
+
+          if (!isCake && chosenKg < minAllowedKg) {
+            alert(
+              `This cake design requires a minimum order quantity of ${photoMoqStr}. Please select at least ${photoMoqStr}.`,
+            );
+            return;
+          }
+
+          const branchSelect = document.getElementById("buyNowBranchSelect");
+          const shopId = branchSelect ? branchSelect.value : "electronic_city";
+          const branchObj =
+            MERCHANT_BRANCHES.find((b) => b.id === shopId) ||
+            MERCHANT_BRANCHES[0];
+          const cleanNum = getBranchWhatsAppNumber(shopId);
+          const cat = categories.find(
+            (c) => c.id === buyNowTargetPhoto.categoryId,
+          );
+          const catName = isCake
+            ? buyNowTargetPhoto.categoryName ||
+              getCakeCategoryName(buyNowTargetPhoto.categoryId)
+            : cat
+              ? cat.name
+              : "Cake Design";
+          const cakeMsgInput = document.getElementById("buyNowCakeMsg");
+          const cakeMsg = cakeMsgInput ? cakeMsgInput.value.trim() : "";
+          const cakeDescInput = document.getElementById("buyNowCakeDesc");
+          const cakeDesc = cakeDescInput ? cakeDescInput.value.trim() : "";
+          const custNameInput = document.getElementById("buyNowCustomerName");
+          const custName = custNameInput ? custNameInput.value.trim() : "";
+          const custPhoneInput = document.getElementById("buyNowCustomerPhone");
+          const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
+          const custDateInput = document.getElementById("buyNowDeliveryDate");
+          const custDate = custDateInput ? custDateInput.value.trim() : "";
+          const custTimeInput = document.getElementById("buyNowDeliveryTime");
+          const custTime = custTimeInput ? custTimeInput.value.trim() : "";
+
+          // Egg / Eggless
+          const eggActiveBtn = document.querySelector("[data-egg].active");
+          const eggPref = eggActiveBtn
+            ? eggActiveBtn.dataset.egg === "eggless"
+              ? "Eggless 🟢"
+              : "Egg (Regular) 🥚"
+            : "Egg (Regular) 🥚";
+
+          // Preferred Flavour Note
+          const flavourNoteInput = document.getElementById("buyNowFlavourNote");
+          const flavourNote = flavourNoteInput
+            ? flavourNoteInput.value.trim()
+            : "";
+
+          const currentDc = isCake
+            ? "0"
+            : buyNowTargetPhoto.designCharge !== undefined
+              ? buyNowTargetPhoto.designCharge
+              : "150";
+
+          let cakeCatalogBasePrice = 0;
+          if (isCake && buyNowTargetPhoto) {
+            const smallP =
+              buyNowTargetPhoto.smallPrice || buyNowTargetPhoto.price || 450;
+            const largeP =
+              buyNowTargetPhoto.largePrice || Math.round(smallP * 1.75);
+            if (chosenKg <= 0.5) {
+              cakeCatalogBasePrice = smallP;
+            } else {
+              cakeCatalogBasePrice = Math.round(chosenKg * largeP);
             }
           }
-          selectedWeight = `${customVal} Kg`;
-        }
 
-        const minAllowedKg = isCake ? 0.5 : parseWeightToKg(photoMoqStr);
-        const chosenKg = parseWeightToKg(selectedWeight);
+          const priceInfo =
+            isCake && buyNowTargetPhoto
+              ? {
+                  flavourName: selectedFlavour,
+                  weightStr: selectedWeight,
+                  weightInKg: chosenKg,
+                  basePrice: cakeCatalogBasePrice,
+                  designCharge: 0,
+                  totalPrice: cakeCatalogBasePrice,
+                  ratePerKg:
+                    buyNowTargetPhoto.largePrice ||
+                    Math.round(
+                      (buyNowTargetPhoto.smallPrice ||
+                        buyNowTargetPhoto.price ||
+                        450) * 1.75,
+                    ),
+                }
+              : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
 
-        if (isCake && chosenKg <= 1.0) {
-          selectedCakeShape = "Round";
-        }
+          const photoRefId = (buyNowTargetPhoto.id || "cake")
+            .slice(-6)
+            .toUpperCase();
+          const orderTimestamp = Date.now();
+          const generatedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${orderTimestamp.toString().slice(-4)}`;
+          const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(buyNowTargetPhoto.id || "")}&order=${encodeURIComponent(generatedOrderId)}`;
 
-        if (!isCake && chosenKg < minAllowedKg) {
-          alert(
-            `This cake design requires a minimum order quantity of ${photoMoqStr}. Please select at least ${photoMoqStr}.`,
-          );
-          return;
-        }
-
-        const branchSelect = document.getElementById("buyNowBranchSelect");
-        const shopId = branchSelect ? branchSelect.value : "electronic_city";
-        const branchObj =
-          MERCHANT_BRANCHES.find((b) => b.id === shopId) ||
-          MERCHANT_BRANCHES[0];
-        const cleanNum = getBranchWhatsAppNumber(shopId);
-        const cat = categories.find(
-          (c) => c.id === buyNowTargetPhoto.categoryId,
-        );
-        const catName = isCake
-          ? buyNowTargetPhoto.categoryName ||
-            getCakeCategoryName(buyNowTargetPhoto.categoryId)
-          : cat
-            ? cat.name
-            : "Cake Design";
-        const cakeMsgInput = document.getElementById("buyNowCakeMsg");
-        const cakeMsg = cakeMsgInput ? cakeMsgInput.value.trim() : "";
-        const cakeDescInput = document.getElementById("buyNowCakeDesc");
-        const cakeDesc = cakeDescInput ? cakeDescInput.value.trim() : "";
-        const custNameInput = document.getElementById("buyNowCustomerName");
-        const custName = custNameInput ? custNameInput.value.trim() : "";
-        const custPhoneInput = document.getElementById("buyNowCustomerPhone");
-        const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
-        const custDateInput = document.getElementById("buyNowDeliveryDate");
-        const custDate = custDateInput ? custDateInput.value.trim() : "";
-        const custTimeInput = document.getElementById("buyNowDeliveryTime");
-        const custTime = custTimeInput ? custTimeInput.value.trim() : "";
-
-        // Egg / Eggless
-        const eggActiveBtn = document.querySelector("[data-egg].active");
-        const eggPref = eggActiveBtn
-          ? eggActiveBtn.dataset.egg === "eggless"
-            ? "Eggless 🌱"
-            : "Egg (Regular) 🥚"
-          : "Egg (Regular) 🥚";
-
-        // Preferred Flavour Note
-        const flavourNoteInput = document.getElementById("buyNowFlavourNote");
-        const flavourNote = flavourNoteInput
-          ? flavourNoteInput.value.trim()
-          : "";
-
-
-        const currentDc = isCake
-          ? "0"
-          : buyNowTargetPhoto.designCharge !== undefined
-            ? buyNowTargetPhoto.designCharge
-            : "150";
-
-        let cakeCatalogBasePrice = 0;
-        if (isCake && buyNowTargetPhoto) {
-          const smallP =
-            buyNowTargetPhoto.smallPrice || buyNowTargetPhoto.price || 450;
-          const largeP =
-            buyNowTargetPhoto.largePrice || Math.round(smallP * 1.75);
-          if (chosenKg <= 0.5) {
-            cakeCatalogBasePrice = smallP;
-          } else {
-            cakeCatalogBasePrice = Math.round(chosenKg * largeP);
+          // Save order to user's local order history
+          try {
+            const userOrderRecord = {
+              id: generatedOrderId,
+              timestamp: orderTimestamp,
+              dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              cakeId: buyNowTargetPhoto.id || "",
+              cakeName: buyNowTargetPhoto.name || buyNowTargetPhoto.title || selectedFlavour,
+              flavour: selectedFlavour,
+              categoryName: catName,
+              imageUri: buyNowTargetPhoto.uri || "",
+              weight: selectedWeight,
+              eggPref: eggPref,
+              cakeShape: selectedCakeShape || "Round",
+              totalPrice: priceInfo.totalPrice,
+              cakeMsg: cakeMsg,
+              cakeDesc: cakeDesc,
+              customerName: custName,
+              customerPhone: custPhone,
+              shopId: shopId,
+              branchName: branchObj.name,
+              branchWhatsApp: cleanNum,
+              deliveryDate: custDate,
+              deliveryTime: custTime,
+              status: "Order Placed via WhatsApp"
+            };
+            const currentOrdersList = getCustomerOrders();
+            currentOrdersList.unshift(userOrderRecord);
+            saveCustomerOrders(currentOrdersList);
+          } catch (errSave) {
+            console.warn("Could not save order locally:", errSave);
           }
-        }
 
-        const priceInfo =
-          isCake && buyNowTargetPhoto
-            ? {
-                flavourName: selectedFlavour,
-                weightStr: selectedWeight,
-                weightInKg: chosenKg,
-                basePrice: cakeCatalogBasePrice,
-                designCharge: 0,
-                totalPrice: cakeCatalogBasePrice,
-                ratePerKg:
-                  buyNowTargetPhoto.largePrice ||
-                  Math.round(
-                    (buyNowTargetPhoto.smallPrice ||
-                      buyNowTargetPhoto.price ||
-                      450) * 1.75,
-                  ),
-              }
-            : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
+          // Sync order to CakeStudioMerchant Firestore in background
+          try {
+            saveWebOrderToMerchant({
+              photoId: buyNowTargetPhoto.id || "",
+              categoryName: catName,
+              flavour: selectedFlavour,
+              weight:
+                selectedWeight +
+                (isCake && isMentionWeightActive ? " (Custom Mentioned)" : ""),
+              shape: isCake ? selectedCakeShape : "Customize",
+              basePrice: priceInfo.basePrice,
+              designCharge: currentDc,
+              totalPrice: priceInfo.totalPrice,
+              messageOnCake: cakeMsg,
+              description: cakeDesc,
+              imageUri: buyNowTargetPhoto.uri || "",
+              customerName: custName,
+              customerPhone: custPhone,
+              deliveryDate: custDate,
+              deliveryTime: custTime,
+              eggPreference: eggPref,
+              flavourNote: flavourNote,
+              shopId: shopId,
+            });
+          } catch(errMerchant) {
+            console.warn("Could not sync to merchant db:", errMerchant);
+          }
 
-        const photoRefId = (buyNowTargetPhoto.id || "cake")
-          .slice(-6)
-          .toUpperCase();
-        const orderTimestamp = Date.now();
-        const generatedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${orderTimestamp.toString().slice(-4)}`;
-        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(buyNowTargetPhoto.id || "")}&order=${encodeURIComponent(generatedOrderId)}`;
-
-        // Save order to user's local order history (priceInfo is now fully available)
-        try {
-          const userOrderRecord = {
-            id: generatedOrderId,
-            timestamp: orderTimestamp,
-            dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            cakeId: buyNowTargetPhoto.id || "",
-            cakeName: buyNowTargetPhoto.name || buyNowTargetPhoto.title || selectedFlavour,
-            flavour: selectedFlavour,
-            categoryName: catName,
-            imageUri: buyNowTargetPhoto.uri || "",
-            weight: selectedWeight,
-            eggPref: eggPref,
-            cakeShape: selectedCakeShape || "Round",
-            totalPrice: priceInfo.totalPrice,
-            cakeMsg: cakeMsg,
-            cakeDesc: cakeDesc,
-            customerName: custName,
-            customerPhone: custPhone,
-            shopId: shopId,
-            branchName: branchObj.name,
-            branchWhatsApp: cleanNum,
-            deliveryDate: custDate,
-            deliveryTime: custTime,
-            status: "Order Placed via WhatsApp"
-          };
-          const currentOrdersList = getCustomerOrders();
-          currentOrdersList.unshift(userOrderRecord);
-          saveCustomerOrders(currentOrdersList);
-        } catch (errSave) {
-          console.warn("Could not save order locally:", errSave);
-        }
-
-        // Sync order to CakeStudioMerchant Firestore in background
-        saveWebOrderToMerchant({
-          photoId: buyNowTargetPhoto.id || "",
-          categoryName: catName,
-          flavour: selectedFlavour,
-          weight:
-            selectedWeight +
-            (isCake && isMentionWeightActive ? " (Custom Mentioned)" : ""),
-          shape: isCake ? selectedCakeShape : "Customize",
-          basePrice: priceInfo.basePrice,
-          designCharge: currentDc,
-          totalPrice: priceInfo.totalPrice,
-          messageOnCake: cakeMsg,
-          description: cakeDesc,
-          imageUri: buyNowTargetPhoto.uri || "",
-          customerName: custName,
-          customerPhone: custPhone,
-          deliveryDate: custDate,
-          deliveryTime: custTime,
-          eggPreference: eggPref,
-          flavourNote: flavourNote,
-          shopId: shopId,
-        });
-
-        let msg = `🎂 *NEW CAKE ORDER - CAKE STUDIO* 🎂\n`;
-        msg += `──────────────────────────\n`;
-        if (custName || custPhone || custDate || custTime || branchObj) {
-          msg += `👤 *Customer Details:*\n`;
-          if (custName) msg += `• *Name:* ${custName}\n`;
-          if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
-          if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
-          if (custTime) msg += `• *Delivery Time:* ${custTime}\n`;
-          msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+          let msg = `🎂 *NEW CAKE ORDER - CAKE STUDIO* 🎂\n`;
           msg += `──────────────────────────\n`;
-        }
-        msg += `📋 *Order Details:*\n`;
-        msg += `• *Cake Ref:* #${photoRefId}\n`;
-        msg += `• *Category:* ${catName}\n`;
-        msg += `• *Selected Flavour:* ${selectedFlavour}\n`;
-        if (flavourNote) msg += `• *Preferred Flavour Note:* ${flavourNote}\n`;
-        msg += `• *Weight / Size:* ${selectedWeight}${isCake && isMentionWeightActive ? " (Custom Mentioned Weight)" : ""}\n`;
-        if (isCake) {
-          msg += `• *Shape:* ${selectedCakeShape}\n`;
-        }
-        msg += `• *Type:* ${eggPref}\n`;
-        msg += `──────────────────────────\n`;
-        msg += `💰 *Price:*\n`;
-        if (isCake || Number(priceInfo.designCharge) === 0) {
-          msg += `• *Total Price:* ₹${priceInfo.totalPrice}\n`;
-        } else {
-          msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
-          msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
-          msg += `• *Estimated Total:* ₹${priceInfo.totalPrice}\n`;
-        }
-        if (cakeMsg) {
+          if (custName || custPhone || custDate || custTime || branchObj) {
+            msg += `👤 *Customer Details:*\n`;
+            if (custName) msg += `• *Name:* ${custName}\n`;
+            if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
+            if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
+            if (custTime) msg += `• *Delivery Time:* ${custTime}\n`;
+            msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+            msg += `──────────────────────────\n`;
+          }
+          msg += `📦 *Order Details:*\n`;
+          msg += `• *Cake Ref:* #${photoRefId}\n`;
+          msg += `• *Category:* ${catName}\n`;
+          msg += `• *Selected Flavour:* ${selectedFlavour}\n`;
+          if (flavourNote) msg += `• *Preferred Flavour Note:* ${flavourNote}\n`;
+          msg += `• *Weight / Size:* ${selectedWeight}${isCake && isMentionWeightActive ? " (Custom Mentioned Weight)" : ""}\n`;
+          if (isCake) {
+            msg += `• *Shape:* ${selectedCakeShape}\n`;
+          }
+          msg += `• *Type:* ${eggPref}\n`;
           msg += `──────────────────────────\n`;
-          msg += `✍️ *Text on Cake:* "${cakeMsg}"\n`;
-        }
-        if (cakeDesc) {
+          msg += `💰 *Price:*\n`;
+          if (isCake || Number(priceInfo.designCharge) === 0) {
+            msg += `• *Total Price:* ₹${priceInfo.totalPrice}\n`;
+          } else {
+            msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
+            msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
+            msg += `• *Estimated Total:* ₹${priceInfo.totalPrice}\n`;
+          }
+          if (cakeMsg) {
+            msg += `──────────────────────────\n`;
+            msg += `✍️ *Text on Cake:* "${cakeMsg}"\n`;
+          }
+          if (cakeDesc) {
+            msg += `──────────────────────────\n`;
+            msg += `📝 *Special Instructions / Notes:*\n"${cakeDesc}"\n`;
+          }
           msg += `──────────────────────────\n`;
-          msg += `📝 *Special Instructions / Notes:*\n"${cakeDesc}"\n`;
-        }
-        msg += `──────────────────────────\n`;
-        msg += `📦 *Order Reference:* #${generatedOrderId}\n`;
-        msg += `🔗 *Direct Cake & Order Tracking Link:*\n`;
-        msg += `${directCakeLink}\n\n`;
-        msg += `👉 Please confirm availability and delivery slot!`;
+          msg += `📦 *Order Reference:* #${generatedOrderId}\n`;
+          msg += `🔗 *Direct Cake & Order Tracking Link:*\n`;
+          msg += `${directCakeLink}\n\n`;
+          msg += `🙏 Please confirm availability and delivery slot!`;
 
-        const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
-        const waWin = window.open(waUrl, "_blank");
-        if (!waWin || waWin.closed || typeof waWin.closed === "undefined") {
-          window.location.href = waUrl;
+          const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
+
+          // Show feedback
+          showToast("Opening WhatsApp with your cake order... 🎂");
+          const btnText = document.getElementById("btnConfirmBuyNowText");
+          const oldBtnText = btnText ? btnText.textContent : "";
+          if (btnText) btnText.textContent = "Opening WhatsApp... ⏳";
+
+          // Method 1: Invisible anchor click (never blocked by browser popup blockers)
+          try {
+            const waLink = document.createElement("a");
+            waLink.href = waUrl;
+            waLink.target = "_blank";
+            waLink.rel = "noopener noreferrer";
+            document.body.appendChild(waLink);
+            waLink.click();
+            setTimeout(() => {
+              try { document.body.removeChild(waLink); } catch (e) {}
+            }, 500);
+          } catch(e) {}
+
+          // Method 2: window.open fallback
+          try {
+            const w = window.open(waUrl, "_blank");
+            if (!w || w.closed || typeof w.closed === "undefined") {
+              setTimeout(() => {
+                window.location.href = waUrl;
+              }, 400);
+            }
+          } catch(e) {}
+
+          setTimeout(() => {
+            closeBuyNowModal();
+            if (btnText) btnText.textContent = oldBtnText;
+          }, 600);
+
+        } catch (err) {
+          console.error("Order error:", err);
+          alert("Could not process order: " + (err.message || err));
         }
-        closeBuyNowModal();
       }
 
-      // ========================================================
-      // DIRECT SINGLE CAKE VIEW LOGIC (?cake=<id>)
+            // DIRECT SINGLE CAKE VIEW LOGIC (?cake=<id>)
       // ========================================================
       let directSelectedFlavour = "Choco Truffle";
       let directSelectedWeight = "1 Kg";
@@ -15065,209 +15107,234 @@
       }
 
       function handleDirectCakeOrderWhatsApp() {
-        if (!directCakeTargetPhoto) return;
-        const isCake = isCakeCatalogTarget(directCakeTargetPhoto);
+        try {
+          if (!directCakeTargetPhoto) return;
+          const isCake = isCakeCatalogTarget(directCakeTargetPhoto);
 
-        if (isCake && directIsMentionWeightActive) {
-          const customWeightInput = document.getElementById(
-            "directCakeCustomWeightInput",
-          );
-          let customVal = parseFloat(
-            customWeightInput ? customWeightInput.value : "",
-          );
-          if (isNaN(customVal) || customVal <= 0) {
-            alert(
-              "Please enter a valid cake weight in kilograms (e.g. 5.5, 6.0, 6.5, 7.0 Kg).",
+          if (isCake && directIsMentionWeightActive) {
+            const customWeightInput = document.getElementById(
+              "directCakeCustomWeightInput",
             );
-            customWeightInput?.focus();
+            let customVal = parseFloat(
+              customWeightInput ? customWeightInput.value : "",
+            );
+            if (isNaN(customVal) || customVal <= 0) {
+              alert(
+                "Please enter a valid cake weight in kilograms (e.g. 5.5, 6.0, 6.5, 7.0 Kg).",
+              );
+              customWeightInput?.focus();
+              return;
+            }
+            const snapped = Math.max(0.5, Math.round(customVal * 2) / 2);
+            if (Math.abs(customVal - snapped) > 0.001) {
+              customVal = snapped;
+              if (customWeightInput) {
+                customWeightInput.value =
+                  snapped % 1 === 0 ? snapped.toFixed(1) : String(snapped);
+              }
+            }
+            directSelectedWeight = `${customVal} Kg`;
+          }
+
+          const minAllowedKg = isCake
+            ? 0.5
+            : parseWeightToKg(directCakeTargetPhoto.minOrderQty || "1 Kg");
+          const chosenKg = parseWeightToKg(directSelectedWeight);
+
+          if (!isCake && chosenKg < minAllowedKg) {
+            alert(
+              `This cake design requires a minimum order quantity of ${directCakeTargetPhoto.minOrderQty || minAllowedKg + " Kg"}. Please select at least ${directCakeTargetPhoto.minOrderQty || minAllowedKg + " Kg"}.`,
+            );
             return;
           }
-          const snapped = Math.max(0.5, Math.round(customVal * 2) / 2);
-          if (Math.abs(customVal - snapped) > 0.001) {
-            customVal = snapped;
-            if (customWeightInput) {
-              customWeightInput.value =
-                snapped % 1 === 0 ? snapped.toFixed(1) : String(snapped);
+
+          const cat = categories.find(
+            (c) => c.id === directCakeTargetPhoto.categoryId,
+          );
+          const catName = cat ? cat.name : "Cake Design";
+          const cakeMsgInput = document.getElementById("directCakeMsgInput");
+          const cakeMsg = cakeMsgInput ? cakeMsgInput.value.trim() : "";
+          const cakeDescInput = document.getElementById("directCakeDescInput");
+          const cakeDesc = cakeDescInput ? cakeDescInput.value.trim() : "";
+          const custNameInput = document.getElementById("directCakeCustomerName");
+          const custName = custNameInput ? custNameInput.value.trim() : "";
+          const custPhoneInput = document.getElementById(
+            "directCakeCustomerPhone",
+          );
+          const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
+          const custDateInput = document.getElementById("directCakeDeliveryDate");
+          const custDate = custDateInput ? custDateInput.value.trim() : "";
+          const branchSelect = document.getElementById("directCakeBranchSelect");
+          const shopId = branchSelect ? branchSelect.value : "electronic_city";
+          const branchObj =
+            MERCHANT_BRANCHES.find((b) => b.id === shopId) ||
+            MERCHANT_BRANCHES[0];
+          const cleanNum = getBranchWhatsAppNumber(shopId);
+
+          const currentDc = isCake
+            ? "0"
+            : directCakeTargetPhoto.designCharge !== undefined
+              ? directCakeTargetPhoto.designCharge
+              : "150";
+
+          let cakeCatalogBasePrice = 0;
+          if (isCake && directCakeTargetPhoto) {
+            const smallP =
+              directCakeTargetPhoto.smallPrice ||
+              directCakeTargetPhoto.price ||
+              450;
+            const largeP =
+              directCakeTargetPhoto.largePrice || Math.round(smallP * 1.75);
+            if (chosenKg <= 0.5) {
+              cakeCatalogBasePrice = smallP;
+            } else {
+              cakeCatalogBasePrice = Math.round(chosenKg * largeP);
             }
           }
-          directSelectedWeight = `${customVal} Kg`;
-        }
 
-        const minAllowedKg = isCake
-          ? 0.5
-          : parseWeightToKg(directCakeTargetPhoto.minOrderQty || "1 Kg");
-        const chosenKg = parseWeightToKg(directSelectedWeight);
+          const priceInfo =
+            isCake && directCakeTargetPhoto
+              ? {
+                  flavourName: directSelectedFlavour,
+                  weightStr: directSelectedWeight,
+                  weightInKg: chosenKg,
+                  basePrice: cakeCatalogBasePrice,
+                  designCharge: 0,
+                  totalPrice: cakeCatalogBasePrice,
+                  ratePerKg:
+                    directCakeTargetPhoto.largePrice ||
+                    Math.round(
+                      (directCakeTargetPhoto.smallPrice ||
+                        directCakeTargetPhoto.price ||
+                        450) * 1.75,
+                    ),
+                }
+              : calculateCakePrice(
+                  directSelectedFlavour,
+                  directSelectedWeight,
+                  currentDc,
+                );
 
-        if (!isCake && chosenKg < minAllowedKg) {
-          alert(
-            `This cake design requires a minimum order quantity of ${directCakeTargetPhoto.minOrderQty || minAllowedKg + " Kg"}. Please select at least ${directCakeTargetPhoto.minOrderQty || minAllowedKg + " Kg"}.`,
-          );
-          return;
-        }
+          const photoRefId = (directCakeTargetPhoto.id || "cake")
+            .slice(-6)
+            .toUpperCase();
+          const directOrderTimestamp = Date.now();
+          const directGeneratedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${directOrderTimestamp.toString().slice(-4)}`;
+          const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(directCakeTargetPhoto.id || "")}&order=${encodeURIComponent(directGeneratedOrderId)}`;
 
-        const cat = categories.find(
-          (c) => c.id === directCakeTargetPhoto.categoryId,
-        );
-        const catName = cat ? cat.name : "Cake Design";
-        const cakeMsgInput = document.getElementById("directCakeMsgInput");
-        const cakeMsg = cakeMsgInput ? cakeMsgInput.value.trim() : "";
-        const cakeDescInput = document.getElementById("directCakeDescInput");
-        const cakeDesc = cakeDescInput ? cakeDescInput.value.trim() : "";
-        const custNameInput = document.getElementById("directCakeCustomerName");
-        const custName = custNameInput ? custNameInput.value.trim() : "";
-        const custPhoneInput = document.getElementById(
-          "directCakeCustomerPhone",
-        );
-        const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
-        const custDateInput = document.getElementById("directCakeDeliveryDate");
-        const custDate = custDateInput ? custDateInput.value.trim() : "";
-        const branchSelect = document.getElementById("directCakeBranchSelect");
-        const shopId = branchSelect ? branchSelect.value : "electronic_city";
-        const branchObj =
-          MERCHANT_BRANCHES.find((b) => b.id === shopId) ||
-          MERCHANT_BRANCHES[0];
-        const cleanNum = getBranchWhatsAppNumber(shopId);
-
-
-        const currentDc = isCake
-          ? "0"
-          : directCakeTargetPhoto.designCharge !== undefined
-            ? directCakeTargetPhoto.designCharge
-            : "150";
-
-        let cakeCatalogBasePrice = 0;
-        if (isCake && directCakeTargetPhoto) {
-          const smallP =
-            directCakeTargetPhoto.smallPrice ||
-            directCakeTargetPhoto.price ||
-            450;
-          const largeP =
-            directCakeTargetPhoto.largePrice || Math.round(smallP * 1.75);
-          if (chosenKg <= 0.5) {
-            cakeCatalogBasePrice = smallP;
-          } else {
-            cakeCatalogBasePrice = Math.round(chosenKg * largeP);
+          // Save order to user's local order history
+          try {
+            const directUserOrderRecord = {
+              id: directGeneratedOrderId,
+              timestamp: directOrderTimestamp,
+              dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              cakeId: directCakeTargetPhoto.id || "",
+              cakeName: directCakeTargetPhoto.name || directCakeTargetPhoto.title || directSelectedFlavour,
+              flavour: directSelectedFlavour,
+              categoryName: catName,
+              imageUri: directCakeTargetPhoto.uri || "",
+              weight: directSelectedWeight,
+              eggPref: isCake ? "Eggless / Regular" : "Regular 🥚",
+              cakeShape: "Round",
+              totalPrice: priceInfo.totalPrice,
+              cakeMsg: cakeMsg,
+              cakeDesc: cakeDesc,
+              customerName: custName,
+              customerPhone: custPhone,
+              shopId: shopId,
+              branchName: branchObj.name,
+              branchWhatsApp: cleanNum,
+              deliveryDate: custDate,
+              status: "Order Placed via WhatsApp"
+            };
+            const curOrders = getCustomerOrders();
+            curOrders.unshift(directUserOrderRecord);
+            saveCustomerOrders(curOrders);
+          } catch (errSave2) {
+            console.warn("Could not save direct order locally:", errSave2);
           }
-        }
 
-        const priceInfo =
-          isCake && directCakeTargetPhoto
-            ? {
-                flavourName: directSelectedFlavour,
-                weightStr: directSelectedWeight,
-                weightInKg: chosenKg,
-                basePrice: cakeCatalogBasePrice,
-                designCharge: 0,
-                totalPrice: cakeCatalogBasePrice,
-                ratePerKg:
-                  directCakeTargetPhoto.largePrice ||
-                  Math.round(
-                    (directCakeTargetPhoto.smallPrice ||
-                      directCakeTargetPhoto.price ||
-                      450) * 1.75,
-                  ),
-              }
-            : calculateCakePrice(
-                directSelectedFlavour,
-                directSelectedWeight,
-                currentDc,
-              );
+          // Sync order to CakeStudioMerchant Firestore in background
+          try {
+            saveWebOrderToMerchant({
+              photoId: directCakeTargetPhoto.id || "",
+              categoryName: catName,
+              flavour: directSelectedFlavour,
+              weight: directSelectedWeight,
+              basePrice: priceInfo.basePrice,
+              designCharge: currentDc,
+              totalPrice: priceInfo.totalPrice,
+              messageOnCake: cakeMsg,
+              description: cakeDesc,
+              imageUri: directCakeTargetPhoto.uri || "",
+              customerName: custName,
+              customerPhone: custPhone,
+              deliveryDate: custDate,
+              shopId: shopId,
+            });
+          } catch(e) {}
 
-        const photoRefId = (directCakeTargetPhoto.id || "cake")
-          .slice(-6)
-          .toUpperCase();
-        const directOrderTimestamp = Date.now();
-        const directGeneratedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${directOrderTimestamp.toString().slice(-4)}`;
-        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(directCakeTargetPhoto.id || "")}&order=${encodeURIComponent(directGeneratedOrderId)}`;
-
-        // Save order to user's local order history (priceInfo is now fully available)
-        try {
-          const directUserOrderRecord = {
-            id: directGeneratedOrderId,
-            timestamp: directOrderTimestamp,
-            dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            cakeId: directCakeTargetPhoto.id || "",
-            cakeName: directCakeTargetPhoto.name || directCakeTargetPhoto.title || directSelectedFlavour,
-            flavour: directSelectedFlavour,
-            categoryName: catName,
-            imageUri: directCakeTargetPhoto.uri || "",
-            weight: directSelectedWeight,
-            eggPref: isCake ? "Eggless / Regular" : "Regular 🥚",
-            cakeShape: "Round",
-            totalPrice: priceInfo.totalPrice,
-            cakeMsg: cakeMsg,
-            cakeDesc: cakeDesc,
-            customerName: custName,
-            customerPhone: custPhone,
-            shopId: shopId,
-            branchName: branchObj.name,
-            branchWhatsApp: cleanNum,
-            deliveryDate: custDate,
-            status: "Order Placed via WhatsApp"
-          };
-          const curOrders = getCustomerOrders();
-          curOrders.unshift(directUserOrderRecord);
-          saveCustomerOrders(curOrders);
-        } catch (errSave2) {
-          console.warn("Could not save direct order locally:", errSave2);
-        }
-
-        // Sync order to CakeStudioMerchant Firestore in background
-        saveWebOrderToMerchant({
-          photoId: directCakeTargetPhoto.id || "",
-          categoryName: catName,
-          flavour: directSelectedFlavour,
-          weight: directSelectedWeight,
-          basePrice: priceInfo.basePrice,
-          designCharge: currentDc,
-          totalPrice: priceInfo.totalPrice,
-          messageOnCake: cakeMsg,
-          description: cakeDesc,
-          imageUri: directCakeTargetPhoto.uri || "",
-          customerName: custName,
-          customerPhone: custPhone,
-          deliveryDate: custDate,
-          shopId: shopId,
-        });
-
-        let msg = `🎂 *NEW CAKE ORDER - CAKE STUDIO* 🎂\n`;
-        msg += `──────────────────────────\n`;
-        if (custName || custPhone || custDate || branchObj) {
-          msg += `👤 *Customer Details:*\n`;
-          if (custName) msg += `• *Name:* ${custName}\n`;
-          if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
-          if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
-          msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+          let msg = `🎂 *NEW CAKE ORDER - CAKE STUDIO* 🎂\n`;
           msg += `──────────────────────────\n`;
-        }
-        msg += `📋 *Order Details:*\n`;
-        msg += `• *Cake Design Ref:* #${photoRefId}\n`;
-        msg += `• *Category:* ${catName}\n`;
-        msg += `• *Selected Flavour:* ${directSelectedFlavour}\n`;
-        msg += `• *Weight / Size:* ${directSelectedWeight}\n`;
-        msg += `──────────────────────────\n`;
-        msg += `💰 *Price Breakdown:*\n`;
-        msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
-        msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
-        msg += `• *Estimated Total:* ₹${priceInfo.totalPrice}\n`;
-        if (cakeMsg) {
+          if (custName || custPhone || custDate || branchObj) {
+            msg += `👤 *Customer Details:*\n`;
+            if (custName) msg += `• *Name:* ${custName}\n`;
+            if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
+            if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
+            msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+            msg += `──────────────────────────\n`;
+          }
+          msg += `📦 *Order Details:*\n`;
+          msg += `• *Cake Design Ref:* #${photoRefId}\n`;
+          msg += `• *Category:* ${catName}\n`;
+          msg += `• *Selected Flavour:* ${directSelectedFlavour}\n`;
+          msg += `• *Weight / Size:* ${directSelectedWeight}\n`;
           msg += `──────────────────────────\n`;
-          msg += `✍️ *Text on Cake:* "${cakeMsg}"\n`;
-        }
-        if (cakeDesc) {
+          msg += `💰 *Price Breakdown:*\n`;
+          msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
+          msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
+          msg += `• *Estimated Total:* ₹${priceInfo.totalPrice}\n`;
+          if (cakeMsg) {
+            msg += `──────────────────────────\n`;
+            msg += `✍️ *Text on Cake:* "${cakeMsg}"\n`;
+          }
+          if (cakeDesc) {
+            msg += `──────────────────────────\n`;
+            msg += `📝 *Special Instructions / Notes:*\n"${cakeDesc}"\n`;
+          }
           msg += `──────────────────────────\n`;
-          msg += `📝 *Special Instructions / Notes:*\n"${cakeDesc}"\n`;
-        }
-        msg += `──────────────────────────\n`;
-        msg += `📦 *Order Reference:* #${directGeneratedOrderId}\n`;
-        msg += `🔗 *Direct Cake & Order Tracking Link:*\n`;
-        msg += `${directCakeLink}\n\n`;
-        msg += `👉 Please confirm availability and delivery slot!`;
+          msg += `📦 *Order Reference:* #${directGeneratedOrderId}\n`;
+          msg += `🔗 *Direct Cake & Order Tracking Link:*\n`;
+          msg += `${directCakeLink}\n\n`;
+          msg += `🙏 Please confirm availability and delivery slot!`;
 
-        const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
-        const waWin = window.open(waUrl, "_blank");
-        if (!waWin || waWin.closed || typeof waWin.closed === "undefined") {
-          window.location.href = waUrl;
+          const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
+
+          showToast("Opening WhatsApp with your cake order... 🎂");
+
+          try {
+            const waLink = document.createElement("a");
+            waLink.href = waUrl;
+            waLink.target = "_blank";
+            waLink.rel = "noopener noreferrer";
+            document.body.appendChild(waLink);
+            waLink.click();
+            setTimeout(() => {
+              try { document.body.removeChild(waLink); } catch (e) {}
+            }, 500);
+          } catch(e) {}
+
+          try {
+            const w = window.open(waUrl, "_blank");
+            if (!w || w.closed || typeof w.closed === "undefined") {
+              setTimeout(() => {
+                window.location.href = waUrl;
+              }, 400);
+            }
+          } catch(e) {}
+        } catch(err) {
+          console.error("Direct order error:", err);
+          alert("Could not process order: " + (err.message || err));
         }
       }
 
