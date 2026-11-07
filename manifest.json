@@ -1,7 +1,7 @@
 {
-  "short_name": "Studio Cake",
-  "name": "Studio Cake Image",
-  "description": "Premium Cake Designs & Photo Catalogue - Studio Cake Image",
+  "short_name": "Cake Studio",
+  "name": "Cake Studio",
+  "description": "Premium Cake Designs & Photo Catalogue - Cake Studio",
   "icons": [
     {
       "src": "/icon.png",
@@ -10,13 +10,13 @@
       "purpose": "any"
     },
     {
-      "src": "/icon.png",
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon.png",
+      "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
@@ -24,13 +24,14 @@
     {
       "src": "/favicon.png",
       "type": "image/png",
-      "sizes": "48x48"
+      "sizes": "48x48",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
   "scope": "/",
-  "background_color": "#FAF5FF",
-  "theme_color": "#7C2D12",
+  "background_color": "#ffffff",
+  "theme_color": "#e11d48",
   "display": "standalone",
   "orientation": "any"
 }

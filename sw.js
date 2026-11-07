@@ -1,5 +1,5 @@
-// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v3
-const CACHE_NAME = 'studio-cake-v3';
+// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v4 (New Cake Studio Logo)
+const CACHE_NAME = 'studio-cake-v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
