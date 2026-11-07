@@ -14559,41 +14559,7 @@
           ? flavourNoteInput.value.trim()
           : "";
 
-        const photoRefId = (buyNowTargetPhoto.id || "cake")
-          .slice(-6)
-          .toUpperCase();
-        const orderTimestamp = Date.now();
-        const generatedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${orderTimestamp.toString().slice(-4)}`;
-        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(buyNowTargetPhoto.id || "")}&order=${encodeURIComponent(generatedOrderId)}`;
 
-        // Save order to user's local order history
-        const userOrderRecord = {
-          id: generatedOrderId,
-          timestamp: orderTimestamp,
-          dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          cakeId: buyNowTargetPhoto.id || "",
-          cakeName: buyNowTargetPhoto.name || buyNowTargetPhoto.title || selectedFlavour,
-          flavour: selectedFlavour,
-          categoryName: catName,
-          imageUri: buyNowTargetPhoto.uri || "",
-          weight: selectedWeight,
-          eggPref: eggPref,
-          cakeShape: selectedCakeShape || "Round",
-          totalPrice: priceInfo.totalPrice,
-          cakeMsg: cakeMsg,
-          cakeDesc: cakeDesc,
-          customerName: custName,
-          customerPhone: custPhone,
-          shopId: shopId,
-          branchName: branchObj.name,
-          branchWhatsApp: cleanNum,
-          deliveryDate: custDate,
-          deliveryTime: custTime,
-          status: "Order Placed via WhatsApp"
-        };
-        const currentOrdersList = getCustomerOrders();
-        currentOrdersList.unshift(userOrderRecord);
-        saveCustomerOrders(currentOrdersList);
         const currentDc = isCake
           ? "0"
           : buyNowTargetPhoto.designCharge !== undefined
@@ -14631,6 +14597,46 @@
                   ),
               }
             : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
+
+        const photoRefId = (buyNowTargetPhoto.id || "cake")
+          .slice(-6)
+          .toUpperCase();
+        const orderTimestamp = Date.now();
+        const generatedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${orderTimestamp.toString().slice(-4)}`;
+        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(buyNowTargetPhoto.id || "")}&order=${encodeURIComponent(generatedOrderId)}`;
+
+        // Save order to user's local order history (priceInfo is now fully available)
+        try {
+          const userOrderRecord = {
+            id: generatedOrderId,
+            timestamp: orderTimestamp,
+            dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            cakeId: buyNowTargetPhoto.id || "",
+            cakeName: buyNowTargetPhoto.name || buyNowTargetPhoto.title || selectedFlavour,
+            flavour: selectedFlavour,
+            categoryName: catName,
+            imageUri: buyNowTargetPhoto.uri || "",
+            weight: selectedWeight,
+            eggPref: eggPref,
+            cakeShape: selectedCakeShape || "Round",
+            totalPrice: priceInfo.totalPrice,
+            cakeMsg: cakeMsg,
+            cakeDesc: cakeDesc,
+            customerName: custName,
+            customerPhone: custPhone,
+            shopId: shopId,
+            branchName: branchObj.name,
+            branchWhatsApp: cleanNum,
+            deliveryDate: custDate,
+            deliveryTime: custTime,
+            status: "Order Placed via WhatsApp"
+          };
+          const currentOrdersList = getCustomerOrders();
+          currentOrdersList.unshift(userOrderRecord);
+          saveCustomerOrders(currentOrdersList);
+        } catch (errSave) {
+          console.warn("Could not save order locally:", errSave);
+        }
 
         // Sync order to CakeStudioMerchant Firestore in background
         saveWebOrderToMerchant({
@@ -14701,7 +14707,10 @@
         msg += `👉 Please confirm availability and delivery slot!`;
 
         const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
-        window.open(waUrl, "_blank");
+        const waWin = window.open(waUrl, "_blank");
+        if (!waWin || waWin.closed || typeof waWin.closed === "undefined") {
+          window.location.href = waUrl;
+        }
         closeBuyNowModal();
       }
 
@@ -15119,40 +15128,7 @@
           MERCHANT_BRANCHES[0];
         const cleanNum = getBranchWhatsAppNumber(shopId);
 
-        const photoRefId = (directCakeTargetPhoto.id || "cake")
-          .slice(-6)
-          .toUpperCase();
-        const directOrderTimestamp = Date.now();
-        const directGeneratedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${directOrderTimestamp.toString().slice(-4)}`;
-        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(directCakeTargetPhoto.id || "")}&order=${encodeURIComponent(directGeneratedOrderId)}`;
 
-        // Save order to user's local order history
-        const directUserOrderRecord = {
-          id: directGeneratedOrderId,
-          timestamp: directOrderTimestamp,
-          dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-          cakeId: directCakeTargetPhoto.id || "",
-          cakeName: directCakeTargetPhoto.name || directCakeTargetPhoto.title || directSelectedFlavour,
-          flavour: directSelectedFlavour,
-          categoryName: catName,
-          imageUri: directCakeTargetPhoto.uri || "",
-          weight: directSelectedWeight,
-          eggPref: isCake ? "Eggless / Regular" : "Regular 🥚",
-          cakeShape: "Round",
-          totalPrice: priceInfo.totalPrice,
-          cakeMsg: cakeMsg,
-          cakeDesc: cakeDesc,
-          customerName: custName,
-          customerPhone: custPhone,
-          shopId: shopId,
-          branchName: branchObj.name,
-          branchWhatsApp: cleanNum,
-          deliveryDate: custDate,
-          status: "Order Placed via WhatsApp"
-        };
-        const curOrders = getCustomerOrders();
-        curOrders.unshift(directUserOrderRecord);
-        saveCustomerOrders(curOrders);
         const currentDc = isCake
           ? "0"
           : directCakeTargetPhoto.designCharge !== undefined
@@ -15196,6 +15172,45 @@
                 directSelectedWeight,
                 currentDc,
               );
+
+        const photoRefId = (directCakeTargetPhoto.id || "cake")
+          .slice(-6)
+          .toUpperCase();
+        const directOrderTimestamp = Date.now();
+        const directGeneratedOrderId = `ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${directOrderTimestamp.toString().slice(-4)}`;
+        const directCakeLink = `${liveWebUrl}/?cake=${encodeURIComponent(directCakeTargetPhoto.id || "")}&order=${encodeURIComponent(directGeneratedOrderId)}`;
+
+        // Save order to user's local order history (priceInfo is now fully available)
+        try {
+          const directUserOrderRecord = {
+            id: directGeneratedOrderId,
+            timestamp: directOrderTimestamp,
+            dateStr: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            cakeId: directCakeTargetPhoto.id || "",
+            cakeName: directCakeTargetPhoto.name || directCakeTargetPhoto.title || directSelectedFlavour,
+            flavour: directSelectedFlavour,
+            categoryName: catName,
+            imageUri: directCakeTargetPhoto.uri || "",
+            weight: directSelectedWeight,
+            eggPref: isCake ? "Eggless / Regular" : "Regular 🥚",
+            cakeShape: "Round",
+            totalPrice: priceInfo.totalPrice,
+            cakeMsg: cakeMsg,
+            cakeDesc: cakeDesc,
+            customerName: custName,
+            customerPhone: custPhone,
+            shopId: shopId,
+            branchName: branchObj.name,
+            branchWhatsApp: cleanNum,
+            deliveryDate: custDate,
+            status: "Order Placed via WhatsApp"
+          };
+          const curOrders = getCustomerOrders();
+          curOrders.unshift(directUserOrderRecord);
+          saveCustomerOrders(curOrders);
+        } catch (errSave2) {
+          console.warn("Could not save direct order locally:", errSave2);
+        }
 
         // Sync order to CakeStudioMerchant Firestore in background
         saveWebOrderToMerchant({
@@ -15250,7 +15265,10 @@
         msg += `👉 Please confirm availability and delivery slot!`;
 
         const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
-        window.open(waUrl, "_blank");
+        const waWin = window.open(waUrl, "_blank");
+        if (!waWin || waWin.closed || typeof waWin.closed === "undefined") {
+          window.location.href = waUrl;
+        }
       }
 
       function exitDirectCakeView() {
