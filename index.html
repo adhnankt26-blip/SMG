@@ -12833,9 +12833,9 @@
         return `${y}-${m}-${d}`;
       }
 
-      function validateStockOutDeliverySlot(photo, delivDate, delivTime) {
+      function validateStockOutDeliverySlot(photo, delivDate, delivTime, isPhotoCakeActive = false) {
         if (!photo || !photo.isStockOut) {
-          return { isValid: true, isStockOut: false, isTomorrow: false, isFuture: false, errorMsg: "", buttonText: "" };
+          return { isValid: true, isStockOut: false, isTomorrow: false, isFuture: false, isSameDayRush: false, errorMsg: "", buttonText: "" };
         }
         const todayStr = getTodayDateString();
         const tomorrowStr = getTomorrowDateString();
@@ -12848,18 +12848,33 @@
             isStockOut: true,
             isTomorrow: false,
             isFuture: false,
+            isSameDayRush: false,
             errorMsg: `This cake is out of stock for today. Please select a delivery date starting tomorrow (${tomorrowStr}) onwards.`,
             buttonText: `Choose Tomorrow Date (Avail ${availFmt})`
           };
         }
 
         if (delivDate <= todayStr) {
+          // If customer wants stock-out photo cake today:
+          // "innu thanne stock out photo cake ulla cake venam ennu paranjal extra cherge 400 aavnam"
+          if (isPhotoCakeActive) {
+            return {
+              isValid: true,
+              isStockOut: true,
+              isTomorrow: false,
+              isFuture: false,
+              isSameDayRush: true,
+              errorMsg: "",
+              buttonText: "Rush Same-Day Order via WhatsApp"
+            };
+          }
           return {
             isValid: false,
             isStockOut: true,
             isTomorrow: false,
             isFuture: false,
-            errorMsg: `This cake is out of stock for today! You can place an advance pre-order for tomorrow starting from ${availFmt} onwards.`,
+            isSameDayRush: false,
+            errorMsg: `This cake is currently out of stock for today! You can place an advance pre-order for tomorrow starting from ${availFmt} onwards, or select 'Photo Cake' for same-day express rush preparation (+₹400).`,
             buttonText: `Out of Stock for Today (Choose Tomorrow)`
           };
         }
@@ -12871,6 +12886,7 @@
               isStockOut: true,
               isTomorrow: true,
               isFuture: false,
+              isSameDayRush: false,
               errorMsg: `This cake will be ready tomorrow only from ${availFmt} onwards. Please select a delivery/pickup time at or after ${availFmt}.`,
               buttonText: `Available Tomorrow after ${availFmt}`
             };
@@ -12880,6 +12896,7 @@
             isStockOut: true,
             isTomorrow: true,
             isFuture: false,
+            isSameDayRush: false,
             errorMsg: "",
             buttonText: "Pre-Order for Tomorrow via WhatsApp"
           };
@@ -12891,6 +12908,7 @@
           isStockOut: true,
           isTomorrow: false,
           isFuture: true,
+          isSameDayRush: false,
           errorMsg: "",
           buttonText: "Advance Pre-Order via WhatsApp"
         };
@@ -12902,7 +12920,11 @@
       let buyNowPhotoCakeDataUrl = "";
       let hasShownPhotoRushPopup = false;
 
-      function getPhotoCakePricing(delivDate, delivTime) {
+      function getPhotoCakePricing(delivDate, delivTime, isStockOutCake = null) {
+        const isStockOut = (isStockOutCake !== null)
+          ? Boolean(isStockOutCake)
+          : Boolean(typeof buyNowTargetPhoto !== "undefined" && buyNowTargetPhoto && buyNowTargetPhoto.isStockOut);
+
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
@@ -12927,25 +12949,43 @@
           delivHour = parseInt(parts[0], 10);
           delivMin = parseInt(parts[1], 10);
         }
-        // Before 3:30 PM is hour < 15 or (hour === 15 and min < 30)
         const isDelivBefore330PM = (delivHour < 15) || (delivHour === 15 && delivMin < 30);
 
-        // Rule:
-        // "photo cakeil suppose inn moonu manik shesham order akki inn thanne venam
-        // Allenkil nale moonu manik munp venam customerinu ennundenkil photo cake order 400 add akkanam.
-        // Ath customerinu pop up aayi message cheyyanam. Tommorow 3.30 pm kk shesham only 250 mathram ennu eyuthanam: 'note: This Is 3 PM'"
         let isRush = false;
         let reason = "";
 
-        // Rule:
-        // - Same day (innu thanne): +₹250
-        // - Tomorrow before 3:30 PM (when ordered after 3:00 PM today): Rush +₹400
-        // - Tomorrow after 3:30 PM or future dates: Standard +₹250
-        if (delivDate === todayStr) {
-          isRush = false;
-        } else if (isAfter3PMToday && delivDate === tomorrowStr && isDelivBefore330PM) {
+        // Pricing Rules:
+        // Rule 1: Stock-out cake wanted TODAY itself
+        // "innu thanne stock out photo cake ulla cake venam ennu paranjal extra cherge 400 aavnam"
+        if (isStockOut && delivDate && delivDate <= todayStr) {
           isRush = true;
-          reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing.";
+          reason = "Urgent same-day preparation for Out-of-Stock cake with edible photo cake print (+₹400). Tomorrow delivery is standard ₹250.";
+        }
+        // Rule 2: Tomorrow delivery (whether stock-out or in-stock)
+        // "if tomorroow aanu photo cake engil currnt condition 'out of stock' anenkil allenkilum photo cake annenkil 250 rupees add aavanm"
+        else if (delivDate === tomorrowStr) {
+          if (!isStockOut && isAfter3PMToday && isDelivBefore330PM) {
+            isRush = true;
+            reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing (+₹400). Tomorrow after 3:30 PM is only ₹250.";
+          } else {
+            isRush = false;
+            reason = "";
+          }
+        }
+        // Rule 3: In-stock cake for today
+        else if (delivDate && delivDate <= todayStr) {
+          if (isAfter3PMToday) {
+            isRush = true;
+            reason = "Order placed after 3:00 PM today for same-day delivery requires express rush photo printing (+₹400).";
+          } else {
+            isRush = false;
+            reason = "";
+          }
+        }
+        // Rule 4: Future dates
+        else {
+          isRush = false;
+          reason = "";
         }
 
         const charge = isRush ? 400 : 250;
@@ -12954,8 +12994,8 @@
           charge,
           reason,
           notice: isRush
-            ? "⚠️ Rush Photo Cake (+₹400): Ordered after 3 PM for today / tomorrow before 3:30 PM. (Tomorrow after 3:30 PM is only ₹250)"
-            : "📸 Standard Photo Cake (+₹250): Tomorrow after 3:30 PM or future date."
+            ? "⚠️ Rush Photo Cake (+₹400): Same-day out-of-stock rush / urgent order. (Tomorrow delivery is standard ₹250)"
+            : "📸 Standard Photo Cake (+₹250): Available tomorrow or future dates."
         };
       }
 
@@ -16275,7 +16315,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=10').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=11').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17597,7 +17637,7 @@
         if (buyNowTargetPhoto && buyNowTargetPhoto.isStockOut) {
           const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
           const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-          const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime);
+          const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
           if (!slotCheck.isValid) {
             if (confirmBuyBtn) {
               confirmBuyBtn.disabled = true;
@@ -17613,10 +17653,19 @@
               confirmBuyBtn.disabled = false;
               confirmBuyBtn.style.opacity = "1";
               confirmBuyBtn.style.cursor = "pointer";
-              confirmBuyBtn.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+              if (slotCheck.isSameDayRush) {
+                confirmBuyBtn.style.background = "linear-gradient(135deg, #e11d48, #be123c)";
+              } else {
+                confirmBuyBtn.style.background = "linear-gradient(135deg, #f59e0b, #d97706)";
+              }
             }
             if (btnConfirmText) {
-              const prefix = slotCheck.isTomorrow ? "Pre-Order for Tomorrow via WhatsApp" : "Advance Pre-Order via WhatsApp";
+              let prefix = "Pre-Order for Tomorrow via WhatsApp";
+              if (slotCheck.isSameDayRush) {
+                prefix = "Rush Same-Day Order via WhatsApp";
+              } else if (slotCheck.isFuture) {
+                prefix = "Advance Pre-Order via WhatsApp";
+              }
               btnConfirmText.textContent = `${prefix} • ₹${priceInfo.totalPrice}`;
             }
           }
@@ -18092,7 +18141,7 @@
           if (buyNowTargetPhoto.isStockOut) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-            const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime);
+            const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
             if (!slotCheck.isValid) {
               alert(slotCheck.errorMsg);
               if (!custDate || custDate <= getTodayDateString()) {
@@ -18299,8 +18348,15 @@
           }
           msg += `📦 *Order Details:*\n`;
           if (buyNowTargetPhoto.isStockOut) {
-            const availFmt = formatTime12Hour(buyNowTargetPhoto.stockAvailableTime || "10:00");
-            msg += `• *Order Type:* 🕒 Advance Pre-Order (Available tomorrow from ${availFmt} onwards)\n`;
+            const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
+            const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
+            const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
+            if (slotCheck.isSameDayRush) {
+              msg += `• *Order Type:* ⚡ Urgent Same-Day Rush (Out-of-Stock Cake with Edible Photo Print)\n`;
+            } else {
+              const availFmt = formatTime12Hour(buyNowTargetPhoto.stockAvailableTime || "10:00");
+              msg += `• *Order Type:* 🕒 Advance Pre-Order (Available tomorrow from ${availFmt} onwards)\n`;
+            }
           }
           msg += `• *Cake Ref:* #${photoRefId}\n`;
           msg += `• *Category:* ${catName}\n`;
