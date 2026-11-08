@@ -4573,6 +4573,186 @@
                     style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
                   />
                 </div>
+
+                <!-- Service Type: Delivery or Store Pickup -->
+                <div style="margin-top: 10px; margin-bottom: 8px">
+                  <label
+                    style="
+                      font-size: 12px;
+                      font-weight: 800;
+                      color: #111827;
+                      margin-bottom: 6px;
+                      display: flex;
+                      align-items: center;
+                      gap: 5px;
+                    "
+                  >
+                    <ion-icon
+                      name="bicycle-outline"
+                      style="font-size: 16px; color: var(--primary)"
+                    ></ion-icon>
+                    <span>Service Type:</span>
+                  </label>
+                  <div style="display: flex; gap: 8px">
+                    <button
+                      type="button"
+                      class="pe-shape-btn active"
+                      id="directCakeBtnServiceDelivery"
+                      data-service="delivery"
+                      style="
+                        flex: 1;
+                        height: 38px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        border-radius: 10px;
+                        font-size: 12px;
+                      "
+                    >
+                      <ion-icon name="car-outline" style="font-size: 16px"></ion-icon>
+                      <span>🚚 Home Delivery</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="pe-shape-btn"
+                      id="directCakeBtnServicePickup"
+                      data-service="pickup"
+                      style="
+                        flex: 1;
+                        height: 38px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        border-radius: 10px;
+                        font-size: 12px;
+                      "
+                    >
+                      <ion-icon name="bag-handle-outline" style="font-size: 16px"></ion-icon>
+                      <span>🛍️ Store Pickup</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Delivery Address Section -->
+                <div
+                  id="directCakeDeliveryAddressSection"
+                  style="
+                    margin-top: 8px;
+                    margin-bottom: 10px;
+                    background: #fff7ed;
+                    border: 1px solid #fed7aa;
+                    border-radius: 12px;
+                    padding: 10px;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <label
+                      style="
+                        font-size: 11.5px;
+                        font-weight: 800;
+                        color: #9a3412;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                      "
+                    >
+                      <ion-icon name="location-outline" style="font-size: 14px"></ion-icon>
+                      <span>Delivery Address (Required) *</span>
+                    </label>
+                    <span
+                      id="directCakeSavedAddressBadge"
+                      style="
+                        display: none;
+                        font-size: 10px;
+                        color: #ea580c;
+                        font-weight: 700;
+                        background: #ffedd5;
+                        padding: 2px 6px;
+                        border-radius: 6px;
+                      "
+                      >Saved Address</span
+                    >
+                  </div>
+                  <textarea
+                    id="directCakeAddressInput"
+                    class="admin-text-input"
+                    placeholder="Enter House/Flat No, Building, Street, Landmark, Pincode *"
+                    rows="2"
+                    style="
+                      width: 100%;
+                      height: 60px;
+                      padding: 8px 10px;
+                      font-size: 12px;
+                      border: 1.5px solid #fdba74;
+                      border-radius: 8px;
+                      margin-bottom: 6px;
+                      background: #ffffff;
+                      resize: vertical;
+                      font-family: inherit;
+                    "
+                  ></textarea>
+                  <label
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      font-size: 11px;
+                      font-weight: 700;
+                      color: #9a3412;
+                      cursor: pointer;
+                      user-select: none;
+                    "
+                  >
+                    <input
+                      type="checkbox"
+                      id="directCakeSaveAddressCheckbox"
+                      checked
+                      style="accent-color: #ea580c; width: 14px; height: 14px; cursor: pointer"
+                    />
+                    <span>Save this delivery address for future orders</span>
+                  </label>
+                </div>
+
+                <!-- Store Pickup Info Notice -->
+                <div
+                  id="directCakePickupNoticeSection"
+                  style="
+                    display: none;
+                    margin-top: 8px;
+                    margin-bottom: 10px;
+                    background: #eff6ff;
+                    border: 1px solid #bfdbfe;
+                    border-radius: 12px;
+                    padding: 10px;
+                    font-size: 11.5px;
+                    color: #1e40af;
+                  "
+                >
+                  <div
+                    style="
+                      font-weight: 800;
+                      margin-bottom: 2px;
+                      display: flex;
+                      align-items: center;
+                      gap: 5px;
+                    "
+                  >
+                    <ion-icon name="storefront-outline" style="font-size: 15px"></ion-icon>
+                    <span>Store Pickup Selected</span>
+                  </div>
+                  <div style="line-height: 1.4">
+                    You can directly collect your fresh cake from the selected Cake Studio branch at your specified pickup time!
+                  </div>
+                </div>
                 <div style="display: flex; gap: 8px">
                   <div style="flex: 1">
                     <label
@@ -7676,6 +7856,186 @@
                 maxlength="14"
                 style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
               />
+            </div>
+
+            <!-- Service Type: Delivery or Store Pickup -->
+            <div style="margin-top: 10px; margin-bottom: 8px">
+              <label
+                style="
+                  font-size: 12px;
+                  font-weight: 800;
+                  color: #111827;
+                  margin-bottom: 6px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                "
+              >
+                <ion-icon
+                  name="bicycle-outline"
+                  style="font-size: 16px; color: var(--primary)"
+                ></ion-icon>
+                <span>Service Type:</span>
+              </label>
+              <div style="display: flex; gap: 8px">
+                <button
+                  type="button"
+                  class="pe-shape-btn active"
+                  id="buyNowBtnServiceDelivery"
+                  data-service="delivery"
+                  style="
+                    flex: 1;
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    border-radius: 10px;
+                    font-size: 12px;
+                  "
+                >
+                  <ion-icon name="car-outline" style="font-size: 16px"></ion-icon>
+                  <span>🚚 Home Delivery</span>
+                </button>
+                <button
+                  type="button"
+                  class="pe-shape-btn"
+                  id="buyNowBtnServicePickup"
+                  data-service="pickup"
+                  style="
+                    flex: 1;
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    border-radius: 10px;
+                    font-size: 12px;
+                  "
+                >
+                  <ion-icon name="bag-handle-outline" style="font-size: 16px"></ion-icon>
+                  <span>🛍️ Store Pickup</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Delivery Address Section -->
+            <div
+              id="buyNowDeliveryAddressSection"
+              style="
+                margin-top: 8px;
+                margin-bottom: 10px;
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                border-radius: 12px;
+                padding: 10px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: 4px;
+                "
+              >
+                <label
+                  style="
+                    font-size: 11.5px;
+                    font-weight: 800;
+                    color: #9a3412;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                  "
+                >
+                  <ion-icon name="location-outline" style="font-size: 14px"></ion-icon>
+                  <span>Delivery Address (Required) *</span>
+                </label>
+                <span
+                  id="buyNowSavedAddressBadge"
+                  style="
+                    display: none;
+                    font-size: 10px;
+                    color: #ea580c;
+                    font-weight: 700;
+                    background: #ffedd5;
+                    padding: 2px 6px;
+                    border-radius: 6px;
+                  "
+                  >Saved Address</span
+                >
+              </div>
+              <textarea
+                id="buyNowAddressInput"
+                class="admin-text-input"
+                placeholder="Enter House/Flat No, Building, Street, Landmark, Pincode *"
+                rows="2"
+                style="
+                  width: 100%;
+                  height: 60px;
+                  padding: 8px 10px;
+                  font-size: 12px;
+                  border: 1.5px solid #fdba74;
+                  border-radius: 8px;
+                  margin-bottom: 6px;
+                  background: #ffffff;
+                  resize: vertical;
+                  font-family: inherit;
+                "
+              ></textarea>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 11px;
+                  font-weight: 700;
+                  color: #9a3412;
+                  cursor: pointer;
+                  user-select: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="buyNowSaveAddressCheckbox"
+                  checked
+                  style="accent-color: #ea580c; width: 14px; height: 14px; cursor: pointer"
+                />
+                <span>Save this delivery address for future orders</span>
+              </label>
+            </div>
+
+            <!-- Store Pickup Info Notice -->
+            <div
+              id="buyNowPickupNoticeSection"
+              style="
+                display: none;
+                margin-top: 8px;
+                margin-bottom: 10px;
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                border-radius: 12px;
+                padding: 10px;
+                font-size: 11.5px;
+                color: #1e40af;
+              "
+            >
+              <div
+                style="
+                  font-weight: 800;
+                  margin-bottom: 2px;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                "
+              >
+                <ion-icon name="storefront-outline" style="font-size: 15px"></ion-icon>
+                <span>Store Pickup Selected</span>
+              </div>
+              <div style="line-height: 1.4">
+                You can directly collect your fresh cake from the selected Cake Studio branch at your specified pickup time!
+              </div>
             </div>
             <div style="display: flex; gap: 8px">
               <div style="flex: 1">
@@ -10877,6 +11237,66 @@
       // ========================================================
       // CUSTOMER ORDERS LOGIC & PERSISTENCE
       // ========================================================
+      function getSavedUserAddress() {
+        try {
+          return localStorage.getItem("cake_studio_user_address") || "";
+        } catch(e) {
+          return "";
+        }
+      }
+
+      function saveUserAddress(addr) {
+        try {
+          if (addr && addr.trim()) {
+            localStorage.setItem("cake_studio_user_address", addr.trim());
+          }
+        } catch(e) {}
+      }
+
+      function initServiceTypeToggles() {
+        const bnDeliv = document.getElementById("buyNowBtnServiceDelivery");
+        const bnPickup = document.getElementById("buyNowBtnServicePickup");
+        const bnAddrSec = document.getElementById("buyNowDeliveryAddressSection");
+        const bnPickupSec = document.getElementById("buyNowPickupNoticeSection");
+
+        const updateBn = (type) => {
+          if (type === "delivery") {
+            bnDeliv?.classList.add("active");
+            bnPickup?.classList.remove("active");
+            if (bnAddrSec) bnAddrSec.style.display = "block";
+            if (bnPickupSec) bnPickupSec.style.display = "none";
+          } else {
+            bnPickup?.classList.add("active");
+            bnDeliv?.classList.remove("active");
+            if (bnAddrSec) bnAddrSec.style.display = "none";
+            if (bnPickupSec) bnPickupSec.style.display = "block";
+          }
+        };
+        bnDeliv?.addEventListener("click", () => updateBn("delivery"));
+        bnPickup?.addEventListener("click", () => updateBn("pickup"));
+
+        const dcDeliv = document.getElementById("directCakeBtnServiceDelivery");
+        const dcPickup = document.getElementById("directCakeBtnServicePickup");
+        const dcAddrSec = document.getElementById("directCakeDeliveryAddressSection");
+        const dcPickupSec = document.getElementById("directCakePickupNoticeSection");
+
+        const updateDc = (type) => {
+          if (type === "delivery") {
+            dcDeliv?.classList.add("active");
+            dcPickup?.classList.remove("active");
+            if (dcAddrSec) dcAddrSec.style.display = "block";
+            if (dcPickupSec) dcPickupSec.style.display = "none";
+          } else {
+            dcPickup?.classList.add("active");
+            dcDeliv?.classList.remove("active");
+            if (dcAddrSec) dcAddrSec.style.display = "none";
+            if (dcPickupSec) dcPickupSec.style.display = "block";
+          }
+        };
+        dcDeliv?.addEventListener("click", () => updateDc("delivery"));
+        dcPickup?.addEventListener("click", () => updateDc("pickup"));
+      }
+
       function deduplicateOrdersList(list) {
         if (!Array.isArray(list)) return [];
         const seen = [];
@@ -10992,6 +11412,28 @@
               ${order.cakeMsg ? `<div style="font-size: 11.5px; color: #334155; font-style: italic; background: #f8fafc; padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--primary); margin-top: 4px;">✍️ "${order.cakeMsg}"</div>` : ''}
               ${order.cakeDesc ? `<div style="font-size: 11px; color: #64748b; margin-top: 4px;">📝 Note: ${order.cakeDesc}</div>` : ''}
             </div>
+          </div>
+
+          <!-- Service Type & Delivery Address Card -->
+          <div style="background: ${order.serviceType === 'Store Pickup' ? '#eff6ff' : '#fff7ed'}; border: 1px solid ${order.serviceType === 'Store Pickup' ? '#bfdbfe' : '#fed7aa'}; border-radius: 14px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: ${order.serviceType === 'Store Pickup' ? '#1e40af' : '#9a3412'}; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+              <span style="display: flex; align-items: center; gap: 5px;">
+                <ion-icon name="${order.serviceType === 'Store Pickup' ? 'bag-handle-outline' : 'bicycle-outline'}" style="font-size: 16px;"></ion-icon>
+                <span>${order.serviceType === 'Store Pickup' ? '🛍️ Store Pickup' : '🚚 Home Delivery'}</span>
+              </span>
+              <span style="font-size: 10px; font-weight: 700; background: #ffffff; padding: 2px 7px; border-radius: 6px; border: 1px solid ${order.serviceType === 'Store Pickup' ? '#bfdbfe' : '#fed7aa'};">
+                ${order.serviceType || 'Delivery'}
+              </span>
+            </div>
+            ${order.serviceType !== 'Store Pickup' && order.deliveryAddress ? `
+              <div style="font-size: 12px; color: #374151; line-height: 1.4; word-break: break-word;">
+                <span style="color: #9a3412; font-weight: 700;">📍 Delivery Address:</span> ${order.deliveryAddress}
+              </div>
+            ` : `
+              <div style="font-size: 12px; color: #374151; line-height: 1.4;">
+                <span style="color: #1e40af; font-weight: 700;">📍 Pickup Location:</span> Cake Studio ${branchName} store
+              </div>
+            `}
           </div>
 
           <!-- Customer Contact Details Card -->
@@ -11221,6 +11663,16 @@
                 </div>
               </div>
             </div>
+
+            <!-- Service Type & Delivery Address Badge -->
+            ${order.deliveryAddress ? `
+              <div style="background: ${order.serviceType === 'Store Pickup' ? '#eff6ff' : '#fff7ed'}; border: 1px solid ${order.serviceType === 'Store Pickup' ? '#bfdbfe' : '#fed7aa'}; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; font-size: 11px; color: ${order.serviceType === 'Store Pickup' ? '#1e40af' : '#9a3412'}; display: flex; align-items: flex-start; gap: 5px;">
+                <ion-icon name="${order.serviceType === 'Store Pickup' ? 'bag-handle-outline' : 'bicycle-outline'}" style="font-size: 14px; flex-shrink: 0; margin-top: 1px;"></ion-icon>
+                <span style="word-break: break-word;">
+                  <b>${order.serviceType === 'Store Pickup' ? '🛍️ Store Pickup' : '🚚 Delivery Address'}:</b> ${order.deliveryAddress}
+                </span>
+              </div>
+            ` : ''}
 
             <!-- Customer Details & Direct Call Options -->
             <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 10px; padding: 7px 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
@@ -14661,14 +15113,28 @@
         document.getElementById("buyNowCakeRef").textContent =
           `Ref: #${photoRefId}`;
 
-        // Pre-fill Name & Phone from localStorage
+        // Pre-fill Name, Phone & Delivery Address from localStorage
         try {
           const savedName = localStorage.getItem("cake_studio_user_name") || "";
           const savedPhone = localStorage.getItem("cake_studio_user_phone") || "";
+          const savedAddr = getSavedUserAddress();
           const nameInputEl = document.getElementById("buyNowCustomerName");
           const phoneInputEl = document.getElementById("buyNowCustomerPhone");
+          const addrInputEl = document.getElementById("buyNowAddressInput");
+          const addrBadgeEl = document.getElementById("buyNowSavedAddressBadge");
+
           if (nameInputEl && !nameInputEl.value) nameInputEl.value = savedName;
           if (phoneInputEl && !phoneInputEl.value) phoneInputEl.value = savedPhone;
+          if (addrInputEl && !addrInputEl.value) addrInputEl.value = savedAddr;
+          if (addrBadgeEl) addrBadgeEl.style.display = savedAddr ? "inline-block" : "none";
+
+          // Reset to default delivery
+          document.getElementById("buyNowBtnServiceDelivery")?.classList.add("active");
+          document.getElementById("buyNowBtnServicePickup")?.classList.remove("active");
+          const addrSec = document.getElementById("buyNowDeliveryAddressSection");
+          const pickupSec = document.getElementById("buyNowPickupNoticeSection");
+          if (addrSec) addrSec.style.display = "block";
+          if (pickupSec) pickupSec.style.display = "none";
         } catch(e) {}
 
         // Stock Out handling in modal
@@ -15332,6 +15798,27 @@
             return;
           }
 
+          // Service Type & Delivery Address
+          const isPickup = document.getElementById("buyNowBtnServicePickup")?.classList.contains("active");
+          const serviceType = isPickup ? "Store Pickup" : "Home Delivery";
+          const addrInput = document.getElementById("buyNowAddressInput");
+          let deliveryAddress = "";
+
+          if (!isPickup) {
+            deliveryAddress = (addrInput ? addrInput.value : "").trim();
+            if (!deliveryAddress) {
+              alert("Please enter your complete delivery address (House/Flat, Street, Landmark, Pincode) for Home Delivery.");
+              addrInput?.focus();
+              return;
+            }
+            const saveCheck = document.getElementById("buyNowSaveAddressCheckbox");
+            if (!saveCheck || saveCheck.checked) {
+              saveUserAddress(deliveryAddress);
+            }
+          } else {
+            deliveryAddress = "Store Pickup from " + branchObj.name;
+          }
+
           try {
             localStorage.setItem("cake_studio_user_name", custName);
             localStorage.setItem("cake_studio_user_phone", cleanPhoneNum.slice(-10));
@@ -15422,6 +15909,8 @@
               shopId: shopId,
               branchName: branchObj.name,
               branchWhatsApp: cleanNum,
+              serviceType: serviceType,
+              deliveryAddress: deliveryAddress,
               deliveryDate: custDate,
               deliveryTime: custTime,
               status: "Order Placed via WhatsApp"
@@ -15452,6 +15941,8 @@
               imageUri: buyNowTargetPhoto.uri || "",
               customerName: custName,
               customerPhone: custPhone,
+              serviceType: serviceType,
+              deliveryAddress: deliveryAddress,
               deliveryDate: custDate,
               deliveryTime: custTime,
               eggPreference: eggPref,
@@ -15468,9 +15959,13 @@
             msg += `👤 *Customer Details:*\n`;
             if (custName) msg += `• *Name:* ${custName}\n`;
             if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
+            msg += `• *Service Type:* ${serviceType === "Home Delivery" ? "🚚 Home Delivery" : "🛍️ Store Pickup"}\n`;
+            if (serviceType === "Home Delivery") {
+              msg += `• *Delivery Address:* ${deliveryAddress}\n`;
+            }
             if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
             if (custTime) msg += `• *Delivery Time:* ${custTime}\n`;
-            msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+            msg += `• *Store Branch:* ${branchObj.name}\n`;
             msg += `──────────────────────────\n`;
           }
           msg += `📦 *Order Details:*\n`;
@@ -15658,11 +16153,25 @@
         const searchInput = document.getElementById("directFlavourSearch");
         if (searchInput) searchInput.value = "";
         const custNameInput = document.getElementById("directCakeCustomerName");
-        if (custNameInput) custNameInput.value = "";
-        const custPhoneInput = document.getElementById(
-          "directCakeCustomerPhone",
-        );
-        if (custPhoneInput) custPhoneInput.value = "";
+        const custPhoneInput = document.getElementById("directCakeCustomerPhone");
+        const directAddrInput = document.getElementById("directCakeAddressInput");
+        const directAddrBadge = document.getElementById("directCakeSavedAddressBadge");
+        try {
+          const savedName = localStorage.getItem("cake_studio_user_name") || "";
+          const savedPhone = localStorage.getItem("cake_studio_user_phone") || "";
+          const savedAddr = getSavedUserAddress();
+          if (custNameInput) custNameInput.value = savedName;
+          if (custPhoneInput) custPhoneInput.value = savedPhone;
+          if (directAddrInput && !directAddrInput.value) directAddrInput.value = savedAddr;
+          if (directAddrBadge) directAddrBadge.style.display = savedAddr ? "inline-block" : "none";
+
+          document.getElementById("directCakeBtnServiceDelivery")?.classList.add("active");
+          document.getElementById("directCakeBtnServicePickup")?.classList.remove("active");
+          const dAddrSec = document.getElementById("directCakeDeliveryAddressSection");
+          const dPickupSec = document.getElementById("directCakePickupNoticeSection");
+          if (dAddrSec) dAddrSec.style.display = "block";
+          if (dPickupSec) dPickupSec.style.display = "none";
+        } catch(e) {}
         const custDateInput = document.getElementById("directCakeDeliveryDate");
         if (custDateInput) custDateInput.value = "";
         const branchSelect = document.getElementById("directCakeBranchSelect");
@@ -15992,6 +16501,27 @@
             return;
           }
 
+          // Service Type & Delivery Address
+          const directIsPickup = document.getElementById("directCakeBtnServicePickup")?.classList.contains("active");
+          const directServiceType = directIsPickup ? "Store Pickup" : "Home Delivery";
+          const directAddrInput = document.getElementById("directCakeAddressInput");
+          let directDeliveryAddress = "";
+
+          if (!directIsPickup) {
+            directDeliveryAddress = (directAddrInput ? directAddrInput.value : "").trim();
+            if (!directDeliveryAddress) {
+              alert("Please enter your complete delivery address (House/Flat, Street, Landmark, Pincode) for Home Delivery.");
+              directAddrInput?.focus();
+              return;
+            }
+            const directSaveCheck = document.getElementById("directCakeSaveAddressCheckbox");
+            if (!directSaveCheck || directSaveCheck.checked) {
+              saveUserAddress(directDeliveryAddress);
+            }
+          } else {
+            directDeliveryAddress = "Store Pickup from " + branchObj.name;
+          }
+
           try {
             localStorage.setItem("cake_studio_user_name", custName);
             localStorage.setItem("cake_studio_user_phone", cleanDirectPhone.slice(-10));
@@ -16078,6 +16608,8 @@
               shopId: shopId,
               branchName: branchObj.name,
               branchWhatsApp: cleanNum,
+              serviceType: directServiceType,
+              deliveryAddress: directDeliveryAddress,
               deliveryDate: custDate,
               status: "Order Placed via WhatsApp"
             };
@@ -16104,6 +16636,8 @@
               imageUri: directCakeTargetPhoto.uri || "",
               customerName: custName,
               customerPhone: custPhone,
+              serviceType: directServiceType,
+              deliveryAddress: directDeliveryAddress,
               deliveryDate: custDate,
               shopId: shopId,
             });
@@ -16115,8 +16649,12 @@
             msg += `👤 *Customer Details:*\n`;
             if (custName) msg += `• *Name:* ${custName}\n`;
             if (custPhone) msg += `• *Phone:* ${custPhone}\n`;
+            msg += `• *Service Type:* ${directServiceType === "Home Delivery" ? "🚚 Home Delivery" : "🛍️ Store Pickup"}\n`;
+            if (directServiceType === "Home Delivery") {
+              msg += `• *Delivery Address:* ${directDeliveryAddress}\n`;
+            }
             if (custDate) msg += `• *Delivery Date:* ${custDate}\n`;
-            msg += `• *Pickup/Branch:* ${branchObj.name}\n`;
+            msg += `• *Store Branch:* ${branchObj.name}\n`;
             msg += `──────────────────────────\n`;
           }
           msg += `📦 *Order Details:*\n`;
@@ -16572,6 +17110,7 @@
       if (closeBuyNowBtn) {
         closeBuyNowBtn.addEventListener("click", closeBuyNowModal);
       }
+      initServiceTypeToggles();
       const confirmBuyNowBtn = document.getElementById("btnConfirmBuyNow");
       if (confirmBuyNowBtn) {
         confirmBuyNowBtn.addEventListener("click", handleConfirmBuyNow);
