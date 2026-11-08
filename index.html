@@ -25,7 +25,7 @@
 
     <!-- Google Fonts -->
         <!-- PWA Web App Manifest & Mobile Meta -->
-    <link rel="manifest" href="manifest.json?v=5" />
+    <link rel="manifest" href="manifest.json?v=6" />
     <link rel="icon" type="image/png" sizes="1024x1024" href="icon.png?v=5" />
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=5" />
     <link rel="shortcut icon" href="favicon.ico?v=5" />
@@ -4552,22 +4552,25 @@
                     name="person-outline"
                     style="font-size: 14px; color: var(--primary)"
                   ></ion-icon>
-                  Your Contact Details (Optional):
+                  <span>Your Contact Details (Required) <span style="color: #e11d48">*</span>:</span>
                 </label>
                 <div style="display: flex; gap: 8px; margin-bottom: 8px">
                   <input
                     type="text"
                     id="directCakeCustomerName"
                     class="admin-text-input"
-                    placeholder="Your Name"
-                    style="flex: 1; margin-bottom: 0"
+                    placeholder="Your Name *"
+                    required
+                    style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
                   />
                   <input
                     type="tel"
                     id="directCakeCustomerPhone"
                     class="admin-text-input"
-                    placeholder="Phone Number"
-                    style="flex: 1; margin-bottom: 0"
+                    placeholder="10-Digit Mobile Number *"
+                    required
+                    maxlength="14"
+                    style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
                   />
                 </div>
                 <div style="display: flex; gap: 8px">
@@ -6882,6 +6885,29 @@
 
         <!-- Orders Screen Body -->
         <div style="padding: 14px 16px 100px;">
+          <!-- Order Phone Tracker / Login Card -->
+          <div id="ordersPhoneTrackerBox" style="background: linear-gradient(135deg, #fff1f2 0%, #ffffff 100%); border: 1.5px solid #fecdd3; border-radius: 18px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.06);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <div style="width: 28px; height: 28px; border-radius: 8px; background: #ffe4e6; display: flex; align-items: center; justify-content: center; color: #e11d48;">
+                  <ion-icon name="call" style="font-size: 15px;"></ion-icon>
+                </div>
+                <span style="font-size: 13px; font-weight: 800; color: #9f1239;">Track Orders by Phone</span>
+              </div>
+              <span id="ordersActivePhoneBadge" style="display: none; font-size: 10.5px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 2px 8px; border-radius: 10px; border: 1px solid #a7f3d0;">Active Number</span>
+            </div>
+            <p style="font-size: 11.5px; color: #78716c; margin-bottom: 10px; line-height: 1.4;">
+              Enter the phone number used while placing orders to view your order history and receipts across any device.
+            </p>
+            <div style="display: flex; gap: 8px;">
+              <input type="tel" id="ordersLookupPhoneInput" class="admin-text-input" placeholder="e.g. 9876543210 (10 digits)" style="margin-bottom: 0; flex: 1; height: 42px; font-size: 13.5px; font-weight: 700; border-radius: 12px; border: 1.5px solid #fda4af;" />
+              <button type="button" id="btnLookupOrdersByPhone" style="background: var(--primary); color: #ffffff; border: none; padding: 0 16px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.25); white-space: nowrap;">
+                <ion-icon name="search-outline" style="font-size: 16px;"></ion-icon> Find Orders
+              </button>
+            </div>
+            <div id="ordersLookupFeedback" style="display: none; font-size: 11px; font-weight: 700; color: #e11d48; margin-top: 6px;"></div>
+          </div>
+
           <div id="customerOrdersList">
             <!-- Rendered dynamically -->
           </div>
@@ -6999,6 +7025,11 @@
     <div class="buy-now-modal" id="buyNowModal">
       <div class="buy-now-card">
         <div class="buy-now-header">
+        <!-- Stock Out Warning Banner -->
+        <div id="buyNowStockOutBanner" style="display: none; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; align-items: center; gap: 8px; color: #991b1b; font-size: 12.5px; font-weight: 700;">
+          <ion-icon name="alert-circle" style="font-size: 22px; color: #dc2626; flex-shrink: 0;"></ion-icon>
+          <span>This cake is currently <strong>Out of Stock</strong>. Ordering is temporarily disabled.</span>
+        </div>
           <div style="display: flex; align-items: center; gap: 8px">
             <ion-icon
               name="bag-handle"
@@ -7624,24 +7655,27 @@
             >
               <ion-icon
                 name="person"
-                style="font-size: 15px; color: #111827"
+                style="font-size: 15px; color: #e11d48"
               ></ion-icon>
-              Your Contact Details (Optional):
+              <span>Your Contact Details (Required) <span style="color: #e11d48">*</span>:</span>
             </label>
             <div style="display: flex; gap: 8px; margin-bottom: 8px">
               <input
                 type="text"
                 id="buyNowCustomerName"
                 class="admin-text-input"
-                placeholder="Your Name"
-                style="flex: 1; margin-bottom: 0"
+                placeholder="Your Name *"
+                required
+                style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
               />
               <input
                 type="tel"
                 id="buyNowCustomerPhone"
                 class="admin-text-input"
-                placeholder="Phone Number"
-                style="flex: 1; margin-bottom: 0"
+                placeholder="10-Digit Mobile Number *"
+                required
+                maxlength="14"
+                style="flex: 1; margin-bottom: 0; border: 1.5px solid #fecdd3;"
               />
             </div>
             <div style="display: flex; gap: 8px">
@@ -8685,7 +8719,7 @@
           </button>
         </div>
 
-        <!-- Preview Row -->
+        <!-- Preview & Image Replacement Row -->
         <div
           style="
             display: flex;
@@ -8693,24 +8727,20 @@
             align-items: center;
             margin-bottom: 14px;
             background: #f9fafb;
-            padding: 10px;
+            padding: 12px;
             border-radius: 16px;
-            border: 1px solid #e5e7eb;
+            border: 1.5px solid #e5e7eb;
           "
         >
-          <img
-            id="adminEditCakeThumb"
-            src=""
-            alt="Cake Preview"
-            style="
-              width: 70px;
-              height: 70px;
-              border-radius: 12px;
-              object-fit: cover;
-              border: 1.5px solid #e5e7eb;
-              background: #eee;
-            "
-          />
+          <div style="position: relative; width: 78px; height: 78px; border-radius: 14px; overflow: hidden; flex-shrink: 0; background: #e5e7eb; border: 1.5px solid #d1d5db;">
+            <img
+              id="adminEditCakeThumb"
+              src=""
+              alt="Cake Preview"
+              style="width: 100%; height: 100%; object-fit: cover;"
+            />
+            <div id="adminEditThumbStockBadge" style="display: none; position: absolute; bottom: 0; left: 0; right: 0; background: rgba(220, 38, 38, 0.9); color: #fff; font-size: 8.5px; font-weight: 800; text-align: center; padding: 2px 0;">OUT OF STOCK</div>
+          </div>
           <div style="flex: 1; min-width: 0">
             <span
               id="adminEditCurrentCatName"
@@ -8724,8 +8754,8 @@
             >
             <div
               style="
-                font-size: 12px;
-                font-weight: 700;
+                font-size: 13px;
+                font-weight: 800;
                 color: #111827;
                 margin-top: 2px;
                 white-space: nowrap;
@@ -8734,24 +8764,86 @@
               "
               id="adminEditCakeIdText"
             >
-              Photo ID
+              Cake
             </div>
-            <p style="font-size: 10.5px; color: #6b7280; margin-top: 2px">
-              Modify category, design charge, or minimum order quantity.
+            <!-- Change Image Button -->
+            <div style="margin-top: 6px;">
+              <input type="file" id="adminEditCakeFileInput" accept="image/*" style="display: none;" />
+              <button
+                type="button"
+                id="btnAdminEditChangeImage"
+                style="
+                  background: #fdf2f8;
+                  color: #be123c;
+                  border: 1.5px solid #fecdd3;
+                  padding: 5px 10px;
+                  border-radius: 8px;
+                  font-size: 11px;
+                  font-weight: 700;
+                  cursor: pointer;
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 4px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                "
+              >
+                <ion-icon name="camera-outline" style="font-size: 14px;"></ion-icon> Change Cake Image
+              </button>
+              <div id="adminEditNewImageNote" style="display: none; font-size: 10px; color: #059669; font-weight: 700; margin-top: 3px;">
+                ✓ New image selected (will update on save)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Out Toggle Banner -->
+        <div
+          style="
+            background: #fff5f5;
+            border: 1.5px solid #fed7d7;
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <div>
+            <div style="font-size: 12.5px; font-weight: 800; color: #c53030; display: flex; align-items: center; gap: 5px;">
+              <ion-icon name="alert-circle-outline" style="font-size: 17px;"></ion-icon>
+              <span>Stock Status</span>
+            </div>
+            <p style="font-size: 10.5px; color: #742a2a; margin-top: 1px;">
+              Mark as Stock Out if this cake is temporarily unavailable
             </p>
           </div>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 800; color: #c53030; background: #ffffff; padding: 6px 12px; border-radius: 20px; border: 1.5px solid #fc8181; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <input type="checkbox" id="adminEditStockOutToggle" style="width: 17px; height: 17px; accent-color: #dc2626; cursor: pointer;">
+            <span id="adminEditStockOutLabel">In Stock 🟢</span>
+          </label>
+        </div>
+
+        <!-- Cake Name (For Catalog Cakes) -->
+        <div id="adminEditCakeNameRow" style="margin-bottom: 12px; display: none;">
+          <label class="box-label" style="color: #374151;">Cake Name</label>
+          <input
+            type="text"
+            id="adminEditCakeNameInput"
+            class="admin-text-input"
+            placeholder="e.g. Royal Truffle Cake"
+            style="margin-bottom: 0; font-size: 13px; font-weight: 700;"
+          />
         </div>
 
         <!-- 1. Category Selector -->
         <div style="margin-bottom: 12px">
-          <label class="box-label" style="color: #374151"
-            >Change Category</label
-          >
+          <label class="box-label" style="color: #374151">Category</label>
           <select
             id="adminEditCategorySelect"
             class="admin-text-input"
             style="
-              height: 42px;
+              height: 40px;
               font-size: 13px;
               font-weight: 600;
               margin-bottom: 0;
@@ -8759,84 +8851,119 @@
           ></select>
         </div>
 
-        <!-- 2. Design Charge (₹) -->
-        <div style="margin-bottom: 12px">
-          <label
-            class="box-label"
-            style="color: #374151; display: flex; align-items: center; gap: 4px"
-          >
-            <ion-icon
-              name="color-palette-outline"
-              style="font-size: 14px; color: #f59e0b"
-            ></ion-icon>
-            Custom Design Charge (₹)
-            <span
-              id="adminEditDcMowCode"
-              style="color: #be123c; font-weight: 700; margin-left: 4px"
-            ></span>
-          </label>
-          <input
-            type="number"
-            id="adminEditDesignChargeInput"
-            class="admin-text-input"
-            placeholder="150"
-            value="150"
-            min="0"
-            style="margin-bottom: 2px; font-size: 14px; font-weight: 700"
-          />
-          <p style="font-size: 10px; color: #6b7280; margin-top: 2px">
-            This charge will be added to the base flavour price for this cake.
+        <!-- Rates for Catalog Cakes (Small Price & Large Price) -->
+        <div id="adminEditCatalogRatesRow" style="margin-bottom: 14px; display: none;">
+          <label class="box-label" style="color: #374151;">Catalog Cake Rates (₹)</label>
+          <div style="display: flex; gap: 8px;">
+            <div style="flex: 1;">
+              <label style="font-size: 10.5px; color: #6b7280; font-weight: 600; margin-bottom: 2px; display: block;">Small Price (0.5 Kg):</label>
+              <input
+                type="number"
+                id="adminEditSmallPriceInput"
+                class="admin-text-input"
+                placeholder="450"
+                min="0"
+                style="margin-bottom: 0; font-size: 14px; font-weight: 800; color: #059669;"
+              />
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 10.5px; color: #6b7280; font-weight: 600; margin-bottom: 2px; display: block;">Large Price (1.0 Kg):</label>
+              <input
+                type="number"
+                id="adminEditLargePriceInput"
+                class="admin-text-input"
+                placeholder="800"
+                min="0"
+                style="margin-bottom: 0; font-size: 14px; font-weight: 800; color: #059669;"
+              />
+            </div>
+          </div>
+          <p style="font-size: 10px; color: #6b7280; margin-top: 3px;">
+            Higher weights (1.5 Kg, 2 Kg, etc.) are calculated automatically from the 1.0 Kg rate.
           </p>
         </div>
 
-        <!-- 3. Minimum Order Quantity -->
-        <div style="margin-bottom: 16px">
-          <label
-            class="box-label"
-            style="color: #374151; display: flex; align-items: center; gap: 4px"
-          >
-            <ion-icon
-              name="scale-outline"
-              style="font-size: 14px; color: var(--primary)"
-            ></ion-icon>
-            Minimum Order Quantity
-          </label>
-          <input
-            type="text"
-            id="adminEditMinOrderQtyInput"
-            class="admin-text-input"
-            placeholder="1 Kg"
-            value="1 Kg"
-            style="margin-bottom: 6px; font-size: 13px; font-weight: 700"
-          />
-          <div
-            style="display: flex; gap: 5px; flex-wrap: wrap"
-            id="adminEditQtyChips"
-          >
-            <button type="button" class="quick-qty-chip" data-qty="0.5 Kg">
-              0.5 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="1 Kg">
-              1 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="1.5 Kg">
-              1.5 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="2 Kg">
-              2 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="2.5 Kg">
-              2.5 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="3 Kg">
-              3 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="4 Kg">
-              4 Kg
-            </button>
-            <button type="button" class="quick-qty-chip" data-qty="5 Kg">
-              5 Kg
-            </button>
+        <!-- Rates for Category Photos (Design Charge & Min Order Qty) -->
+        <div id="adminEditCategoryRatesRow" style="margin-bottom: 14px;">
+          <!-- 2. Design Charge (₹) -->
+          <div style="margin-bottom: 12px">
+            <label
+              class="box-label"
+              style="color: #374151; display: flex; align-items: center; gap: 4px"
+            >
+              <ion-icon
+                name="color-palette-outline"
+                style="font-size: 14px; color: #f59e0b"
+              ></ion-icon>
+              Custom Design Charge (₹)
+              <span
+                id="adminEditDcMowCode"
+                style="color: #be123c; font-weight: 700; margin-left: 4px"
+              ></span>
+            </label>
+            <input
+              type="number"
+              id="adminEditDesignChargeInput"
+              class="admin-text-input"
+              placeholder="150"
+              value="150"
+              min="0"
+              style="margin-bottom: 2px; font-size: 14px; font-weight: 700"
+            />
+            <p style="font-size: 10px; color: #6b7280; margin-top: 2px">
+              This charge will be added to the base flavour price for this cake.
+            </p>
+          </div>
+
+          <!-- 3. Minimum Order Quantity -->
+          <div>
+            <label
+              class="box-label"
+              style="color: #374151; display: flex; align-items: center; gap: 4px"
+            >
+              <ion-icon
+                name="scale-outline"
+                style="font-size: 14px; color: var(--primary)"
+              ></ion-icon>
+              Minimum Order Quantity
+            </label>
+            <input
+              type="text"
+              id="adminEditMinOrderQtyInput"
+              class="admin-text-input"
+              placeholder="1 Kg"
+              value="1 Kg"
+              style="margin-bottom: 6px; font-size: 13px; font-weight: 700"
+            />
+            <div
+              style="display: flex; gap: 5px; flex-wrap: wrap"
+              id="adminEditQtyChips"
+            >
+              <button type="button" class="quick-qty-chip" data-qty="0.5 Kg">
+                0.5 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="1 Kg">
+                1 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="1.5 Kg">
+                1.5 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="2 Kg">
+                2 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="2.5 Kg">
+                2.5 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="3 Kg">
+                3 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="4 Kg">
+                4 Kg
+              </button>
+              <button type="button" class="quick-qty-chip" data-qty="5 Kg">
+                5 Kg
+              </button>
+            </div>
           </div>
         </div>
 
@@ -10678,26 +10805,59 @@
         }
       }
 
-      function renderCustomerOrdersScreen() {
+      let isFetchingOrdersFromCloud = false;
+
+      async function renderCustomerOrdersScreen() {
         const listEl = document.getElementById("customerOrdersList");
         const subEl = document.getElementById("ordersSubtitleText");
+        const phoneInput = document.getElementById("ordersLookupPhoneInput");
+        const activeBadge = document.getElementById("ordersActivePhoneBadge");
+        const feedbackEl = document.getElementById("ordersLookupFeedback");
         if (!listEl) return;
 
-        const orders = getCustomerOrders();
-        if (subEl) {
-          subEl.textContent = `${orders.length} ${orders.length === 1 ? 'order' : 'orders'} placed`;
+        let activePhone = "";
+        try {
+          activePhone = (localStorage.getItem("cake_studio_user_phone") || "").replace(/\D/g, "").slice(-10);
+        } catch(e) {}
+
+        if (phoneInput && activePhone && !phoneInput.value) {
+          phoneInput.value = activePhone;
         }
+
+        if (activeBadge) {
+          activeBadge.style.display = activePhone ? "inline-block" : "none";
+          if (activePhone) activeBadge.textContent = `+91 ${activePhone}`;
+        }
+
+        // Get local orders
+        const allLocalOrders = getCustomerOrders();
+        let displayOrders = allLocalOrders;
+
+        // If phone number is active, filter local orders for that phone number
+        if (activePhone) {
+          displayOrders = allLocalOrders.filter((o) => {
+            const p = (o.customerPhone || "").replace(/\D/g, "");
+            return p.endsWith(activePhone) || !p;
+          });
+        }
+
         updateOrdersTabBadge();
 
-        if (orders.length === 0) {
+        if (subEl) {
+          subEl.textContent = activePhone
+            ? `${displayOrders.length} order${displayOrders.length === 1 ? '' : 's'} for +91 ${activePhone}`
+            : `${displayOrders.length} order${displayOrders.length === 1 ? '' : 's'} placed`;
+        }
+
+        if (displayOrders.length === 0) {
           listEl.innerHTML = `
-            <div style="text-align: center; padding: 48px 16px; color: #9ca3af;">
+            <div style="text-align: center; padding: 40px 16px; color: #9ca3af;">
               <div style="width: 64px; height: 64px; border-radius: 20px; background: #fff1f2; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1);">
                 <ion-icon name="bag-handle-outline" style="font-size: 32px; color: var(--primary);"></ion-icon>
               </div>
-              <h3 style="font-size: 16px; font-weight: 800; color: #1f2937; margin-bottom: 6px;">No orders placed yet</h3>
-              <p style="font-size: 12px; color: #6b7280; max-width: 290px; margin: 0 auto 18px; line-height: 1.5;">
-                When you customize and place cake orders via WhatsApp, your order receipts will appear here for easy tracking!
+              <h3 style="font-size: 16px; font-weight: 800; color: #1f2937; margin-bottom: 6px;">${activePhone ? `No orders found for +91 ${activePhone}` : 'No orders placed yet'}</h3>
+              <p style="font-size: 12px; color: #6b7280; max-width: 310px; margin: 0 auto 18px; line-height: 1.5;">
+                ${activePhone ? 'If you placed orders with a different phone number, search with that number above.' : 'When you customize and place cake orders via WhatsApp, your order receipts will appear here for easy tracking!'}
               </p>
               <button type="button" id="btnGoToCakesFromOrders" style="background: var(--primary); color: #ffffff; border: none; padding: 11px 22px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);">
                 <ion-icon name="restaurant-outline"></ion-icon> Browse Handcrafted Cakes
@@ -10711,7 +10871,7 @@
         }
 
         listEl.innerHTML = "";
-        orders.forEach((order) => {
+        displayOrders.forEach((order) => {
           const card = document.createElement("div");
           card.className = "user-order-card";
           card.id = `order_card_${order.id}`;
@@ -11743,8 +11903,9 @@
           card.innerHTML = `
             <div class="cake-card-img-wrap">
               ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
+              ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
               <span class="cake-card-badge">${catIcon} ${catName}</span>
-              <img src="${cake.uri}" alt="${cakeName}" loading="lazy">
+              <img src="${cake.uri}" alt="${cakeName}" loading="lazy" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
             </div>
             <div class="cake-card-body">
               <div>
@@ -12014,7 +12175,8 @@
           card.className = "photo-item-card";
           card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          <img src="${photo.uri}" alt="${cat.name}" loading="lazy">
+          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          <img src="${photo.uri}" alt="${cat.name}" loading="lazy" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
@@ -12745,21 +12907,29 @@
           const smallP = cake.smallPrice || cake.price || 450;
           const largeP = cake.largePrice || (cake.smallPrice ? Math.round(cake.smallPrice * 1.75) : 800);
 
+          const isStockOut = Boolean(cake.isStockOut);
           const item = document.createElement("div");
           item.className = "admin-cake-manage-row";
           item.innerHTML = `
             <div style="position: relative; width: 56px; height: 56px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: #f3f4f6;">
-              <img src="${cake.uri}" alt="${cakeName}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="${cake.uri}" alt="${cakeName}" style="width: 100%; height: 100%; object-fit: cover; ${isStockOut ? 'filter: grayscale(60%); opacity: 0.7;' : ''}">
               <span style="position: absolute; top: 2px; left: 2px; background: rgba(0,0,0,0.65); color: #fff; font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 4px;">#${idx + 1}</span>
             </div>
             <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 13px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cakeName}</div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cakeName}</span>
+                ${isStockOut ? '<span style="font-size: 9.5px; font-weight: 800; background: #fee2e2; color: #dc2626; padding: 1px 6px; border-radius: 6px; border: 1px solid #fecaca; white-space: nowrap;">Stock Out</span>' : ''}
+              </div>
               <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap;">
                 <span style="font-size: 10px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 1px 6px; border-radius: 6px;">${catIcon} ${catName}</span>
                 <span style="font-size: 11px; font-weight: 700; color: #059669;">₹${smallP} / ₹${largeP}</span>
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+              <!-- Edit button -->
+              <button type="button" class="btn-reorder btn-cake-edit-catalog" title="Edit Cake Rates, Photo & Stock" style="background: #fff1f2; color: #be123c; border-color: #fecdd3; font-weight: 700;">
+                <ion-icon name="create-outline"></ion-icon>
+              </button>
               <!-- Reorder buttons -->
               <button type="button" class="btn-reorder btn-cake-up" title="Move Up" ${idx === 0 ? "disabled" : ""}>
                 <ion-icon name="arrow-up-outline"></ion-icon>
@@ -12789,6 +12959,11 @@
           item.querySelector(".btn-cake-top")?.addEventListener("click", () => {
             const fullIdx = catalogCakes.findIndex((c) => c.id === cake.id);
             if (fullIdx > 0) reorderCatalogCake(catalogCakes, fullIdx, 'top');
+          });
+
+          // Edit event
+          item.querySelector(".btn-cake-edit-catalog")?.addEventListener("click", () => {
+            openAdminEditCakeModal(cake);
           });
 
           // Delete event
@@ -13004,6 +13179,116 @@
           b.style.display = plat.isStandalone ? "none" : "flex";
         }
 
+        // Wire Phone Number Lookup in Orders Tab
+        document.getElementById("btnLookupOrdersByPhone")?.addEventListener("click", async () => {
+          const phoneInput = document.getElementById("ordersLookupPhoneInput");
+          const rawPhone = phoneInput ? phoneInput.value.trim() : "";
+          const cleanPhone = rawPhone.replace(/\D/g, "").slice(-10);
+
+          if (!cleanPhone || cleanPhone.length < 10) {
+            alert("Please enter a valid 10-digit mobile number to search orders.");
+            phoneInput?.focus();
+            return;
+          }
+
+          try {
+            localStorage.setItem("cake_studio_user_phone", cleanPhone);
+          } catch(e) {}
+
+          const listEl = document.getElementById("customerOrdersList");
+          if (listEl) {
+            listEl.innerHTML = `
+              <div style="text-align: center; padding: 36px 16px;">
+                <ion-icon name="sync-outline" class="spin" style="font-size: 32px; color: var(--primary);"></ion-icon>
+                <p style="font-size: 13px; font-weight: 700; color: #4b5563; margin-top: 8px;">Searching orders for +91 ${cleanPhone}...</p>
+              </div>
+            `;
+          }
+
+          // Query merchantCustomerDb for live orders matching this phone
+          try {
+            if (typeof merchantCustomerDb !== "undefined" && merchantCustomerDb) {
+              const snap = await merchantCustomerDb.collection("orders")
+                .where("customerPhone", "in", [cleanPhone, "+91" + cleanPhone, "91" + cleanPhone, rawPhone])
+                .get();
+
+              if (!snap.empty) {
+                const currentLocalOrders = getCustomerOrders();
+                snap.forEach((doc) => {
+                  const data = doc.data() || {};
+                  const ordId = doc.id;
+                  if (!currentLocalOrders.some((o) => o.id === ordId || o.id === data.billNumber)) {
+                    currentLocalOrders.unshift({
+                      id: data.billNumber || ordId,
+                      timestamp: data.createdAt || Date.now(),
+                      dateStr: data.deliveryDate ? `📅 ${data.deliveryDate}` : "Recent Order",
+                      cakeName: (data.items && data.items[0]?.name) || data.flavour || "Cake Studio Order",
+                      flavour: (data.items && data.items[0]?.flavour) || data.flavour || "Handcrafted Flavour",
+                      categoryName: "Online Order",
+                      imageUri: (data.items && (data.items[0]?.photoCakeUrl || data.items[0]?.customPhotoUri)) || "splash.jpg",
+                      weight: (data.items && data.items[0]?.weight ? `${data.items[0].weight} Kg` : data.weight) || "1 Kg",
+                      eggPref: "Eggless / Regular",
+                      cakeShape: "Round",
+                      totalPrice: data.totalAmount || data.total || 0,
+                      cakeMsg: data.cakeMessage || (data.items && data.items[0]?.customLabel) || "",
+                      cakeDesc: data.description || (data.items && data.items[0]?.description) || "",
+                      customerName: data.customerName || data.userName || "",
+                      customerPhone: cleanPhone,
+                      branchName: data.shopBranch || "Cake Studio",
+                      deliveryDate: data.deliveryDate || "",
+                      deliveryTime: data.deliveryTime || "",
+                      status: data.status || "Order Placed via WhatsApp"
+                    });
+                  }
+                });
+                saveCustomerOrders(currentLocalOrders);
+              }
+            }
+          } catch (errDb) {
+            console.warn("Could not query merchant db for phone orders:", errDb);
+          }
+
+          renderCustomerOrdersScreen();
+          showToast(`Orders loaded for +91 ${cleanPhone} 📱`);
+        });
+
+        // Wire Enter Key on Phone Search Input
+        document.getElementById("ordersLookupPhoneInput")?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            document.getElementById("btnLookupOrdersByPhone")?.click();
+          }
+        });
+
+        // Wire Change Image Button in adminEditCakeModal
+        const fileInputEditCake = document.getElementById("adminEditCakeFileInput");
+        document.getElementById("btnAdminEditChangeImage")?.addEventListener("click", () => {
+          fileInputEditCake?.click();
+        });
+
+        fileInputEditCake?.addEventListener("change", async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            const base64 = await compressImage(file);
+            pendingNewCakeImageBase64 = base64;
+            const thumbImg = document.getElementById("adminEditCakeThumb");
+            if (thumbImg) thumbImg.src = base64;
+            const noteEl = document.getElementById("adminEditNewImageNote");
+            if (noteEl) noteEl.style.display = "block";
+            showToast("New image chosen! Click 'Save Changes' to apply. 📷");
+          } catch (errImg) {
+            alert("Could not process image: " + errImg.message);
+          }
+        });
+
+        // Wire Stock Out Toggle Label in adminEditCakeModal
+        document.getElementById("adminEditStockOutToggle")?.addEventListener("change", (e) => {
+          const lbl = document.getElementById("adminEditStockOutLabel");
+          const badge = document.getElementById("adminEditThumbStockBadge");
+          if (lbl) lbl.textContent = e.target.checked ? "Stock Out 🔴" : "In Stock 🟢";
+          if (badge) badge.style.display = e.target.checked ? "block" : "none";
+        });
+
         // Wire Category Reorder in Admin
         document.getElementById("btnMoveCategoryLeft")?.addEventListener("click", () => {
           reorderCategory("left");
@@ -13020,7 +13305,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=5').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=6').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -13245,92 +13530,182 @@
       }
 
       // Admin Cake Edit Modal Functions
-      function openAdminEditCakeModal(photo) {
-        if (!photo) return;
-        currentEditingPhoto = photo;
-        const cat = categories.find((c) => c.id === photo.categoryId);
-        const photoRefId = (photo.id || "cake").slice(-6).toUpperCase();
+      let pendingNewCakeImageBase64 = null;
 
-        document.getElementById("adminEditCakeThumb").src = photo.uri;
-        document.getElementById("adminEditCakeRef").textContent =
-          `Ref: #${photoRefId}`;
-        document.getElementById("adminEditCurrentCatName").textContent = cat
-          ? cat.name
-          : "Category";
-        document.getElementById("adminEditCakeIdText").textContent =
-          `ID: ${photo.id}`;
+      function openAdminEditCakeModal(item) {
+        if (!item) return;
+        currentEditingPhoto = item;
+        pendingNewCakeImageBase64 = null;
 
-        // Populate categories
+        const isCatalogCake = Boolean(
+          item.isCakeCatalogItem ||
+          (item.id && String(item.id).startsWith("cake_")) ||
+          catalogCakes.some((c) => c.id === item.id)
+        );
+
+        const photoRefId = (item.id || "cake").slice(-6).toUpperCase();
+        document.getElementById("adminEditCakeThumb").src = item.uri;
+        document.getElementById("adminEditCakeRef").textContent = `Ref: #${photoRefId}`;
+        document.getElementById("adminEditCakeIdText").textContent = item.name || item.title || `Ref: #${photoRefId}`;
+
+        const newImgNote = document.getElementById("adminEditNewImageNote");
+        if (newImgNote) newImgNote.style.display = "none";
+
+        // Stock Out Toggle
+        const isStockOut = Boolean(item.isStockOut);
+        const stockToggle = document.getElementById("adminEditStockOutToggle");
+        const stockLabel = document.getElementById("adminEditStockOutLabel");
+        const thumbStockBadge = document.getElementById("adminEditThumbStockBadge");
+        if (stockToggle) stockToggle.checked = isStockOut;
+        if (stockLabel) stockLabel.textContent = isStockOut ? "Stock Out 🔴" : "In Stock 🟢";
+        if (thumbStockBadge) thumbStockBadge.style.display = isStockOut ? "block" : "none";
+
+        // Category dropdown
         const catSelect = document.getElementById("adminEditCategorySelect");
         catSelect.innerHTML = "";
-        categories.forEach((c) => {
-          const opt = document.createElement("option");
-          opt.value = c.id;
-          opt.textContent = `${c.name}`;
-          if (c.id === photo.categoryId) opt.selected = true;
-          catSelect.appendChild(opt);
-        });
-
-        // Set inputs
-        const currentDc =
-          photo.designCharge !== undefined ? String(photo.designCharge) : "150";
-        document.getElementById("adminEditDesignChargeInput").value = currentDc;
-        const editDcPreview = document.getElementById("adminEditDcMowCode");
-        if (editDcPreview) {
-          const code = getMowancheryCode(currentDc);
-          editDcPreview.textContent = code ? `(Code: ${code})` : "";
+        if (isCatalogCake) {
+          CAKE_FLAVOUR_CATEGORIES.forEach((c) => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = `${c.name}`;
+            if (c.id === item.categoryId) opt.selected = true;
+            catSelect.appendChild(opt);
+          });
+        } else {
+          categories.forEach((c) => {
+            const opt = document.createElement("option");
+            opt.value = c.id;
+            opt.textContent = `${c.name}`;
+            if (c.id === item.categoryId) opt.selected = true;
+            catSelect.appendChild(opt);
+          });
         }
 
-        const currentMoq = photo.minOrderQty || "1 Kg";
-        document.getElementById("adminEditMinOrderQtyInput").value = currentMoq;
+        const currentCat = isCatalogCake
+          ? CAKE_FLAVOUR_CATEGORIES.find((c) => c.id === item.categoryId)
+          : categories.find((c) => c.id === item.categoryId);
+        document.getElementById("adminEditCurrentCatName").textContent = currentCat ? currentCat.name : "Category";
 
-        // Highlight chip
-        document
-          .querySelectorAll("#adminEditQtyChips .quick-qty-chip")
-          .forEach((chip) => {
-            chip.classList.toggle("active", chip.dataset.qty === currentMoq);
-          });
+        // Cake Name & Rates Rows
+        const nameRow = document.getElementById("adminEditCakeNameRow");
+        const catalogRatesRow = document.getElementById("adminEditCatalogRatesRow");
+        const categoryRatesRow = document.getElementById("adminEditCategoryRatesRow");
+
+        if (isCatalogCake) {
+          if (nameRow) {
+            nameRow.style.display = "block";
+            document.getElementById("adminEditCakeNameInput").value = item.name || item.title || "";
+          }
+          if (catalogRatesRow) {
+            catalogRatesRow.style.display = "block";
+            const smallP = item.smallPrice || item.price || 450;
+            const largeP = item.largePrice || (item.smallPrice ? Math.round(item.smallPrice * 1.75) : 800);
+            document.getElementById("adminEditSmallPriceInput").value = smallP;
+            document.getElementById("adminEditLargePriceInput").value = largeP;
+          }
+          if (categoryRatesRow) categoryRatesRow.style.display = "none";
+        } else {
+          if (nameRow) nameRow.style.display = "none";
+          if (catalogRatesRow) catalogRatesRow.style.display = "none";
+          if (categoryRatesRow) {
+            categoryRatesRow.style.display = "block";
+            const currentDc = item.designCharge !== undefined ? String(item.designCharge) : "150";
+            document.getElementById("adminEditDesignChargeInput").value = currentDc;
+            const editDcPreview = document.getElementById("adminEditDcMowCode");
+            if (editDcPreview) {
+              const code = getMowancheryCode(currentDc);
+              editDcPreview.textContent = code ? `(Code: ${code})` : "";
+            }
+            const currentMoq = item.minOrderQty || "1 Kg";
+            document.getElementById("adminEditMinOrderQtyInput").value = currentMoq;
+            document.querySelectorAll("#adminEditQtyChips .quick-qty-chip").forEach((chip) => {
+              chip.classList.toggle("active", chip.dataset.qty === currentMoq);
+            });
+          }
+        }
 
         document.getElementById("adminEditCakeModal").classList.add("active");
       }
 
       function closeAdminEditCakeModal() {
-        document
-          .getElementById("adminEditCakeModal")
-          .classList.remove("active");
+        document.getElementById("adminEditCakeModal").classList.remove("active");
         currentEditingPhoto = null;
+        pendingNewCakeImageBase64 = null;
       }
 
       async function handleSaveCakeEdits() {
         if (!currentEditingPhoto) return;
-        const catSelect = document.getElementById("adminEditCategorySelect");
-        const dcInput = document.getElementById("adminEditDesignChargeInput");
-        const moqInput = document.getElementById("adminEditMinOrderQtyInput");
-
-        const newCatId = catSelect.value;
-        const newDc = dcInput ? dcInput.value.trim() || "150" : "150";
-        const newMoq = moqInput ? moqInput.value.trim() || "1 Kg" : "1 Kg";
-
         const saveBtn = document.getElementById("btnSaveAdminEditCake");
         saveBtn.disabled = true;
         saveBtn.innerHTML = `<ion-icon name="sync-outline" class="spin" style="font-size: 16px; margin-right: 4px;"></ion-icon> Saving...`;
 
         try {
-          await db.collection("photos").doc(currentEditingPhoto.id).update({
-            categoryId: newCatId,
-            designCharge: newDc,
-            minOrderQty: newMoq,
-            updatedAt: Date.now(),
-          });
+          const isCatalogCake = Boolean(
+            currentEditingPhoto.isCakeCatalogItem ||
+            (currentEditingPhoto.id && String(currentEditingPhoto.id).startsWith("cake_")) ||
+            catalogCakes.some((c) => c.id === currentEditingPhoto.id)
+          );
 
-          // Update local photo
-          currentEditingPhoto.categoryId = newCatId;
-          currentEditingPhoto.designCharge = newDc;
-          currentEditingPhoto.minOrderQty = newMoq;
+          const catSelect = document.getElementById("adminEditCategorySelect");
+          const newCatId = catSelect ? catSelect.value : currentEditingPhoto.categoryId;
+          const stockToggle = document.getElementById("adminEditStockOutToggle");
+          const isStockOut = stockToggle ? Boolean(stockToggle.checked) : false;
+
+          const updatedDoc = {
+            categoryId: newCatId,
+            isStockOut: isStockOut,
+            updatedAt: Date.now(),
+          };
+
+          if (pendingNewCakeImageBase64) {
+            updatedDoc.uri = pendingNewCakeImageBase64;
+          }
+
+          if (isCatalogCake) {
+            const nameInput = document.getElementById("adminEditCakeNameInput");
+            const smallPInput = document.getElementById("adminEditSmallPriceInput");
+            const largePInput = document.getElementById("adminEditLargePriceInput");
+
+            const newName = nameInput ? nameInput.value.trim() : (currentEditingPhoto.name || "");
+            const newSmallP = parseFloat(smallPInput?.value) || 450;
+            const newLargeP = parseFloat(largePInput?.value) || Math.round(newSmallP * 1.75);
+
+            updatedDoc.name = newName;
+            updatedDoc.smallPrice = newSmallP;
+            updatedDoc.largePrice = newLargeP;
+            updatedDoc.price = newSmallP;
+            updatedDoc.categoryName = getCakeCategoryName(newCatId);
+
+            await db.collection("cakes").doc(currentEditingPhoto.id).set(updatedDoc, { merge: true });
+
+            // Update in-memory catalog cake
+            Object.assign(currentEditingPhoto, updatedDoc);
+            const foundIdx = catalogCakes.findIndex((c) => c.id === currentEditingPhoto.id);
+            if (foundIdx !== -1) Object.assign(catalogCakes[foundIdx], updatedDoc);
+          } else {
+            // Category photo (e.g. Anniversary Cake)
+            const dcInput = document.getElementById("adminEditDesignChargeInput");
+            const moqInput = document.getElementById("adminEditMinOrderQtyInput");
+
+            const newDc = dcInput ? dcInput.value.trim() || "150" : "150";
+            const newMoq = moqInput ? moqInput.value.trim() || "1 Kg" : "1 Kg";
+
+            updatedDoc.designCharge = newDc;
+            updatedDoc.minOrderQty = newMoq;
+
+            await db.collection("photos").doc(currentEditingPhoto.id).set(updatedDoc, { merge: true });
+
+            // Update in-memory photo
+            Object.assign(currentEditingPhoto, updatedDoc);
+            const foundIdx = allPhotos.findIndex((p) => p.id === currentEditingPhoto.id);
+            if (foundIdx !== -1) Object.assign(allPhotos[foundIdx], updatedDoc);
+          }
 
           closeAdminEditCakeModal();
           renderAllViews();
-          alert("Cake details updated successfully!");
+          renderCakesScreen();
+          if (typeof renderAdminCakesList === "function") renderAdminCakesList();
+          showToast("Cake details updated successfully! ✨");
         } catch (err) {
           console.error("Save cake edits error:", err);
           alert("Error updating cake: " + (err?.message || err));
@@ -13966,6 +14341,37 @@
         }
         document.getElementById("buyNowCakeRef").textContent =
           `Ref: #${photoRefId}`;
+
+        // Pre-fill Name & Phone from localStorage
+        try {
+          const savedName = localStorage.getItem("cake_studio_user_name") || "";
+          const savedPhone = localStorage.getItem("cake_studio_user_phone") || "";
+          const nameInputEl = document.getElementById("buyNowCustomerName");
+          const phoneInputEl = document.getElementById("buyNowCustomerPhone");
+          if (nameInputEl && !nameInputEl.value) nameInputEl.value = savedName;
+          if (phoneInputEl && !phoneInputEl.value) phoneInputEl.value = savedPhone;
+        } catch(e) {}
+
+        // Stock Out handling in modal
+        const isStockOut = Boolean(photo.isStockOut);
+        const stockBannerEl = document.getElementById("buyNowStockOutBanner");
+        if (stockBannerEl) {
+          stockBannerEl.style.display = isStockOut ? "flex" : "none";
+        }
+        const confirmBuyBtn = document.getElementById("btnConfirmBuyNow");
+        const confirmBuyText = document.getElementById("btnConfirmBuyNowText");
+        if (confirmBuyBtn) {
+          if (isStockOut) {
+            confirmBuyBtn.disabled = true;
+            confirmBuyBtn.style.opacity = "0.5";
+            confirmBuyBtn.style.cursor = "not-allowed";
+            if (confirmBuyText) confirmBuyText.textContent = "Currently Out of Stock ❌";
+          } else {
+            confirmBuyBtn.disabled = false;
+            confirmBuyBtn.style.opacity = "1";
+            confirmBuyBtn.style.cursor = "pointer";
+          }
+        }
         const noticeRef = document.getElementById("buyNowNoticeRef");
         if (noticeRef) noticeRef.textContent = `Ref: #${photoRefId}`;
 
@@ -14558,6 +14964,29 @@
           const custName = custNameInput ? custNameInput.value.trim() : "";
           const custPhoneInput = document.getElementById("buyNowCustomerPhone");
           const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
+
+          if (buyNowTargetPhoto.isStockOut) {
+            alert("Sorry, this cake design is currently marked as Out of Stock.");
+            return;
+          }
+
+          if (!custName) {
+            alert("Please enter your Name before placing the order.");
+            custNameInput?.focus();
+            return;
+          }
+
+          const cleanPhoneNum = custPhone.replace(/\D/g, "");
+          if (!cleanPhoneNum || cleanPhoneNum.length < 10) {
+            alert("Please enter a valid 10-digit mobile number in Contact Details.");
+            custPhoneInput?.focus();
+            return;
+          }
+
+          try {
+            localStorage.setItem("cake_studio_user_name", custName);
+            localStorage.setItem("cake_studio_user_phone", cleanPhoneNum.slice(-10));
+          } catch(e) {}
           const custDateInput = document.getElementById("buyNowDeliveryDate");
           const custDate = custDateInput ? custDateInput.value.trim() : "";
           const custTimeInput = document.getElementById("buyNowDeliveryTime");
@@ -15177,6 +15606,29 @@
             "directCakeCustomerPhone",
           );
           const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
+
+          if (directCakeTargetPhoto.isStockOut) {
+            alert("Sorry, this cake design is currently marked as Out of Stock.");
+            return;
+          }
+
+          if (!custName) {
+            alert("Please enter your Name before placing the order.");
+            custNameInput?.focus();
+            return;
+          }
+
+          const cleanDirectPhone = custPhone.replace(/\D/g, "");
+          if (!cleanDirectPhone || cleanDirectPhone.length < 10) {
+            alert("Please enter a valid 10-digit mobile number in Contact Details.");
+            custPhoneInput?.focus();
+            return;
+          }
+
+          try {
+            localStorage.setItem("cake_studio_user_name", custName);
+            localStorage.setItem("cake_studio_user_phone", cleanDirectPhone.slice(-10));
+          } catch(e) {}
           const custDateInput = document.getElementById("directCakeDeliveryDate");
           const custDate = custDateInput ? custDateInput.value.trim() : "";
           const branchSelect = document.getElementById("directCakeBranchSelect");
