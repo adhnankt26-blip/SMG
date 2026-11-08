@@ -1,5 +1,5 @@
-// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v4 (New Cake Studio Logo)
-const CACHE_NAME = 'studio-cake-v4';
+// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v5 (Cake Studio Logo & Instant Refresh)
+const CACHE_NAME = 'studio-cake-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -11,6 +11,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', key);
             return caches.delete(key);
           }
         })
