@@ -4610,8 +4610,8 @@
                         font-size: 12px;
                       "
                     >
-                      <ion-icon name="car-outline" style="font-size: 16px"></ion-icon>
-                      <span>🚚 Home Delivery</span>
+                      <ion-icon name="bicycle-outline" style="font-size: 17px"></ion-icon>
+                      <span>Home Delivery</span>
                     </button>
                     <button
                       type="button"
@@ -4629,8 +4629,8 @@
                         font-size: 12px;
                       "
                     >
-                      <ion-icon name="bag-handle-outline" style="font-size: 16px"></ion-icon>
-                      <span>🛍️ Store Pickup</span>
+                      <ion-icon name="storefront-outline" style="font-size: 17px"></ion-icon>
+                      <span>Store Pickup</span>
                     </button>
                   </div>
                 </div>
@@ -4681,6 +4681,55 @@
                       "
                       >Saved Address</span
                     >
+                  </div>
+                  
+                  <!-- Map & GPS Location Action Bar -->
+                  <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                    <button
+                      type="button"
+                      id="btnDirectCakeUseGps"
+                      style="
+                        flex: 1;
+                        height: 32px;
+                        background: #ffffff;
+                        border: 1px solid #fdba74;
+                        border-radius: 8px;
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: #c2410c;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 5px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                      "
+                    >
+                      <ion-icon name="navigate-outline" style="font-size: 14px"></ion-icon>
+                      <span id="btnDirectCakeGpsText">Use Current Location</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="btnDirectCakeOpenMap"
+                      style="
+                        height: 32px;
+                        padding: 0 12px;
+                        background: #ffffff;
+                        border: 1px solid #fdba74;
+                        border-radius: 8px;
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: #c2410c;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                      "
+                    >
+                      <ion-icon name="map-outline" style="font-size: 14px"></ion-icon>
+                      <span>Google Maps</span>
+                    </button>
                   </div>
                   <textarea
                     id="directCakeAddressInput"
@@ -7654,6 +7703,8 @@
 
           <!-- 2B. Select Cake Shape (Cakes Only: Round, Heart, Square) -->
           <div
+<!-- 2B. Cake Style & Photo Cake Option (Cakes Only) -->
+          <div
             id="buyNowCakeShapeSection"
             style="margin-bottom: 12px; display: none"
           >
@@ -7676,25 +7727,138 @@
                 "
               >
                 <ion-icon
-                  name="shapes"
-                  style="font-size: 15px; color: var(--primary)"
+                  name="camera-outline"
+                  style="font-size: 16px; color: var(--primary)"
                 ></ion-icon>
-                Select Shape:
+                Cake Style / Finish:
               </span>
               <span
-                id="buyNowSelectedShapeBadge"
+                id="buyNowPhotoCakePriceBadge"
                 style="
-                  font-size: 11px;
+                  font-size: 10.5px;
                   font-weight: 800;
-                  color: var(--primary);
-                  background: #fff1f2;
-                  border: 1px solid #fecdd3;
+                  color: #059669;
+                  background: #ecfdf5;
+                  border: 1px solid #a7f3d0;
                   padding: 2px 8px;
                   border-radius: 20px;
+                  display: none;
                 "
-                >Round</span
+                >+₹250 Photo Print</span
               >
             </div>
+            <div style="display: flex; gap: 8px">
+              <button
+                type="button"
+                class="pe-shape-btn active"
+                id="btnBuyNowStyleRegular"
+                data-photocake="no"
+                style="
+                  flex: 1;
+                  height: 38px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+                  border-radius: 10px;
+                  font-size: 12px;
+                "
+              >
+                <ion-icon name="sparkles-outline" style="font-size: 15px"></ion-icon>
+                <span>Regular Cake</span>
+              </button>
+              <button
+                type="button"
+                class="pe-shape-btn"
+                id="btnBuyNowStylePhoto"
+                data-photocake="yes"
+                style="
+                  flex: 1;
+                  height: 38px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 6px;
+                  border-radius: 10px;
+                  font-size: 12px;
+                "
+              >
+                <ion-icon name="camera" style="font-size: 15px; color: var(--primary)"></ion-icon>
+                <span>📸 Photo Cake</span>
+              </button>
+            </div>
+
+            <!-- Photo Cake Details Container (Shown when Photo Cake is selected) -->
+            <div
+              id="buyNowPhotoCakeDetailsBox"
+              style="
+                display: none;
+                margin-top: 8px;
+                background: #fdf2f8;
+                border: 1px solid #fbcfe8;
+                border-radius: 12px;
+                padding: 10px;
+              "
+            >
+              <div
+                id="buyNowPhotoCakeNotice"
+                style="
+                  font-size: 11px;
+                  color: #9d174d;
+                  font-weight: 700;
+                  line-height: 1.4;
+                  margin-bottom: 8px;
+                "
+              >
+                📸 <strong>Edible Photo Cake Print:</strong> Add your favourite photo on the cake! Charge is ₹250 (Tomorrow after 3:30 PM or future dates) or ₹400 for rush delivery (ordered after 3:00 PM for today or before 3:30 PM tomorrow).
+              </div>
+
+              <!-- Upload Photo for Cake -->
+              <div>
+                <label
+                  style="
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #4b5563;
+                    margin-bottom: 4px;
+                    display: block;
+                  "
+                >
+                  Upload Photo for Cake (or send via WhatsApp):
+                </label>
+                <input
+                  type="file"
+                  id="buyNowPhotoCakeFileInput"
+                  accept="image/*"
+                  style="font-size: 11px; width: 100%;"
+                />
+              </div>
+              <div
+                id="buyNowPhotoCakePreviewWrap"
+                style="
+                  display: none;
+                  align-items: center;
+                  gap: 8px;
+                  margin-top: 6px;
+                "
+              >
+                <img
+                  id="buyNowPhotoCakePreviewImg"
+                  src=""
+                  style="
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 8px;
+                    object-fit: cover;
+                    border: 1.5px solid var(--primary);
+                  "
+                />
+                <span style="font-size: 11px; color: #059669; font-weight: 700;">
+                  ✓ Photo attached for cake!
+                </span>
+              </div>
+            </div>
+          </div>
             <div style="display: flex; gap: 8px">
               <button
                 type="button"
@@ -7894,8 +8058,8 @@
                     font-size: 12px;
                   "
                 >
-                  <ion-icon name="car-outline" style="font-size: 16px"></ion-icon>
-                  <span>🚚 Home Delivery</span>
+                  <ion-icon name="bicycle-outline" style="font-size: 17px"></ion-icon>
+                  <span>Home Delivery</span>
                 </button>
                 <button
                   type="button"
@@ -7913,8 +8077,8 @@
                     font-size: 12px;
                   "
                 >
-                  <ion-icon name="bag-handle-outline" style="font-size: 16px"></ion-icon>
-                  <span>🛍️ Store Pickup</span>
+                  <ion-icon name="storefront-outline" style="font-size: 17px"></ion-icon>
+                  <span>Store Pickup</span>
                 </button>
               </div>
             </div>
@@ -7965,6 +8129,58 @@
                   "
                   >Saved Address</span
                 >
+              </div>
+              
+              <!-- Map & GPS Location Action Bar -->
+              <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <button
+                  type="button"
+                  id="btnBuyNowUseGps"
+                  style="
+                    flex: 1;
+                    height: 32px;
+                    background: #ffffff;
+                    border: 1px solid #fdba74;
+                    border-radius: 8px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #c2410c;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                    transition: all 0.2s;
+                  "
+                >
+                  <ion-icon name="navigate-outline" style="font-size: 14px"></ion-icon>
+                  <span id="btnBuyNowGpsText">Use Current Location</span>
+                </button>
+                <button
+                  type="button"
+                  id="btnBuyNowOpenMap"
+                  style="
+                    height: 32px;
+                    padding: 0 12px;
+                    background: #ffffff;
+                    border: 1px solid #fdba74;
+                    border-radius: 8px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #c2410c;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+                  "
+                  title="Open Google Maps to view or copy location"
+                >
+                  <ion-icon name="map-outline" style="font-size: 14px"></ion-icon>
+                  <span>Google Maps</span>
+                </button>
               </div>
               <textarea
                 id="buyNowAddressInput"
@@ -10340,6 +10556,101 @@
       </div>
     </div>
 
+    
+    <!-- ========================================================
+       PHOTO CAKE RUSH ORDER ALERT MODAL
+       ======================================================== -->
+    <div
+      class="customer-rate-modal"
+      id="modalPhotoCakeRushAlert"
+      style="display: none"
+    >
+      <div
+        class="playstore-rating-card"
+        style="
+          max-width: 420px;
+          padding: 22px;
+          border-radius: 22px;
+          background: #ffffff;
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+          text-align: center;
+        "
+      >
+        <div
+          style="
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: #fff7ed;
+            color: #ea580c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 12px;
+            border: 1px solid #fed7aa;
+          "
+        >
+          <ion-icon name="time-outline"></ion-icon>
+        </div>
+        <h3
+          style="
+            font-size: 16px;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 8px;
+          "
+        >
+          Photo Cake Rush Order Notice
+        </h3>
+        <p
+          id="photoCakeRushModalText"
+          style="
+            font-size: 12.5px;
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 14px;
+          "
+        >
+          Since your order is placed after <strong>3:00 PM</strong> today for same-day delivery or tomorrow before <strong>3:30 PM</strong>, express rush edible photo printing charge of <strong>₹400</strong> is added.
+        </p>
+        <div
+          style="
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 11.5px;
+            color: #166534;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: left;
+          "
+        >
+          💡 <strong>Tip (Cut-off 3:00 PM):</strong><br />
+          If you schedule delivery for tomorrow after <strong>3:30 PM</strong> (or future date), photo cake charge is only <strong>₹250</strong>!
+        </div>
+        <button
+          type="button"
+          id="btnClosePhotoCakeRushAlert"
+          style="
+            width: 100%;
+            height: 44px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+          "
+        >
+          Understood & Proceed
+        </button>
+      </div>
+    </div>
+
     <!-- ========================================================
        APPLICATION JAVASCRIPT
        ======================================================== -->
@@ -11253,6 +11564,123 @@
         } catch(e) {}
       }
 
+      
+      // ========================================================
+      // PHOTO CAKE & TIMING PRICING LOGIC
+      // ========================================================
+      let isBuyNowPhotoCakeActive = false;
+      let buyNowPhotoCakeDataUrl = "";
+      let hasShownPhotoRushPopup = false;
+
+      function getPhotoCakePricing(delivDate, delivTime) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const isAfter3PMToday = (currentHour > 15) || (currentHour === 15 && currentMinute >= 0);
+
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomYyyy = tomorrow.getFullYear();
+        const tomMm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const tomDd = String(tomorrow.getDate()).padStart(2, '0');
+        const tomorrowStr = `${tomYyyy}-${tomMm}-${tomDd}`;
+
+        let delivHour = 12;
+        let delivMin = 0;
+        if (delivTime && delivTime.includes(':')) {
+          const parts = delivTime.split(':');
+          delivHour = parseInt(parts[0], 10);
+          delivMin = parseInt(parts[1], 10);
+        }
+        // Before 3:30 PM is hour < 15 or (hour === 15 and min < 30)
+        const isDelivBefore330PM = (delivHour < 15) || (delivHour === 15 && delivMin < 30);
+
+        // Rule:
+        // "photo cakeil suppose inn moonu manik shesham order akki inn thanne venam
+        // Allenkil nale moonu manik munp venam customerinu ennundenkil photo cake order 400 add akkanam.
+        // Ath customerinu pop up aayi message cheyyanam. Tommorow 3.30 pm kk shesham only 250 mathram ennu eyuthanam: 'note: This Is 3 PM'"
+        let isRush = false;
+        let reason = "";
+
+        if (isAfter3PMToday) {
+          if (!delivDate || delivDate === todayStr) {
+            isRush = true;
+            reason = "Order placed after 3:00 PM for same-day delivery requires express rush photo printing.";
+          } else if (delivDate === tomorrowStr && isDelivBefore330PM) {
+            isRush = true;
+            reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing.";
+          }
+        }
+
+        const charge = isRush ? 400 : 250;
+        return {
+          isRush,
+          charge,
+          reason,
+          notice: isRush
+            ? "⚠️ Rush Photo Cake (+₹400): Ordered after 3 PM for today / tomorrow before 3:30 PM. (Tomorrow after 3:30 PM is only ₹250)"
+            : "📸 Standard Photo Cake (+₹250): Tomorrow after 3:30 PM or future date."
+        };
+      }
+
+      function showPhotoRushAlert(pricing) {
+        const modal = document.getElementById("modalPhotoCakeRushAlert");
+        const txt = document.getElementById("photoCakeRushModalText");
+        if (txt && pricing.reason) {
+          txt.innerHTML = `${pricing.reason}<br><br>An express rush edible photo printing charge of <strong>₹400</strong> is applied.`;
+        }
+        if (modal) modal.style.display = "flex";
+      }
+
+      function closePhotoRushAlert() {
+        const modal = document.getElementById("modalPhotoCakeRushAlert");
+        if (modal) modal.style.display = "none";
+      }
+
+      // Geolocation GPS detection
+      function detectUserGpsLocation(inputId, btnTextId) {
+        const input = document.getElementById(inputId);
+        const btnText = document.getElementById(btnTextId);
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser. Please enter your address manually.");
+          return;
+        }
+
+        if (btnText) btnText.textContent = "Detecting... ⏳";
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+              const data = await res.json();
+              if (data && data.display_name) {
+                if (input) input.value = data.display_name;
+                showToast("Location detected and address filled! 📍");
+              } else {
+                if (input) input.value = `GPS Pin: https://maps.google.com/?q=${lat},${lon}`;
+                showToast("GPS coordinates pinned! 📍");
+              }
+            } catch(e) {
+              if (input) input.value = `GPS Pin: https://maps.google.com/?q=${lat},${lon}`;
+              showToast("GPS coordinates pinned! 📍");
+            }
+            if (btnText) btnText.textContent = "Location Detected ✓";
+            setTimeout(() => { if (btnText) btnText.textContent = "Use Current Location"; }, 3000);
+          },
+          (err) => {
+            alert("Could not retrieve your location. Please check browser location permissions or type your address.");
+            if (btnText) btnText.textContent = "Use Current Location";
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
+      }
+
       function initServiceTypeToggles() {
         const bnDeliv = document.getElementById("buyNowBtnServiceDelivery");
         const bnPickup = document.getElementById("buyNowBtnServicePickup");
@@ -11295,6 +11723,101 @@
         };
         dcDeliv?.addEventListener("click", () => updateDc("delivery"));
         dcPickup?.addEventListener("click", () => updateDc("pickup"));
+
+        // GPS & Map Buttons
+        document.getElementById("btnBuyNowUseGps")?.addEventListener("click", () => {
+          detectUserGpsLocation("buyNowAddressInput", "btnBuyNowGpsText");
+        });
+        document.getElementById("btnBuyNowOpenMap")?.addEventListener("click", () => {
+          window.open("https://www.google.com/maps", "_blank");
+        });
+        document.getElementById("btnDirectCakeUseGps")?.addEventListener("click", () => {
+          detectUserGpsLocation("directCakeAddressInput", "btnDirectCakeGpsText");
+        });
+        document.getElementById("btnDirectCakeOpenMap")?.addEventListener("click", () => {
+          window.open("https://www.google.com/maps", "_blank");
+        });
+
+        // Photo Rush Alert Modal Close
+        document.getElementById("btnClosePhotoCakeRushAlert")?.addEventListener("click", closePhotoRushAlert);
+        document.getElementById("modalPhotoCakeRushAlert")?.addEventListener("click", (e) => {
+          if (e.target.id === "modalPhotoCakeRushAlert") closePhotoRushAlert();
+        });
+
+        // Photo Cake Toggles in Buy Now Modal
+        const btnReg = document.getElementById("btnBuyNowStyleRegular");
+        const btnPhoto = document.getElementById("btnBuyNowStylePhoto");
+        const photoBox = document.getElementById("buyNowPhotoCakeDetailsBox");
+        const photoBadge = document.getElementById("buyNowPhotoCakePriceBadge");
+
+        btnReg?.addEventListener("click", () => {
+          isBuyNowPhotoCakeActive = false;
+          btnReg.classList.add("active");
+          btnPhoto?.classList.remove("active");
+          if (photoBox) photoBox.style.display = "none";
+          if (photoBadge) photoBadge.style.display = "none";
+          updateBuyNowPrice();
+        });
+
+        btnPhoto?.addEventListener("click", () => {
+          isBuyNowPhotoCakeActive = true;
+          btnPhoto.classList.add("active");
+          btnReg?.classList.remove("active");
+          if (photoBox) photoBox.style.display = "block";
+
+          const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
+          const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
+          const pricing = getPhotoCakePricing(custDate, custTime);
+
+          if (pricing.isRush && !hasShownPhotoRushPopup) {
+            hasShownPhotoRushPopup = true;
+            showPhotoRushAlert(pricing);
+          }
+          updateBuyNowPrice();
+        });
+
+        // Date and Time listeners for dynamic Photo Cake charge update
+        document.getElementById("buyNowDeliveryDate")?.addEventListener("change", () => {
+          if (isBuyNowPhotoCakeActive) {
+            const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
+            const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
+            const pricing = getPhotoCakePricing(custDate, custTime);
+            if (pricing.isRush && !hasShownPhotoRushPopup) {
+              hasShownPhotoRushPopup = true;
+              showPhotoRushAlert(pricing);
+            }
+          }
+          updateBuyNowPrice();
+        });
+        document.getElementById("buyNowDeliveryTime")?.addEventListener("change", () => {
+          if (isBuyNowPhotoCakeActive) {
+            const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
+            const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
+            const pricing = getPhotoCakePricing(custDate, custTime);
+            if (pricing.isRush && !hasShownPhotoRushPopup) {
+              hasShownPhotoRushPopup = true;
+              showPhotoRushAlert(pricing);
+            }
+          }
+          updateBuyNowPrice();
+        });
+
+        // Photo file input live preview
+        document.getElementById("buyNowPhotoCakeFileInput")?.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (re) => {
+              buyNowPhotoCakeDataUrl = re.target.result;
+              const img = document.getElementById("buyNowPhotoCakePreviewImg");
+              const wrap = document.getElementById("buyNowPhotoCakePreviewWrap");
+              if (img) img.src = buyNowPhotoCakeDataUrl;
+              if (wrap) wrap.style.display = "flex";
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
       }
 
       function deduplicateOrdersList(list) {
@@ -12690,10 +13213,17 @@
                 </div>
               </div>
               <div class="cake-card-btn-row">
-                <button type="button" class="btn-cake-order">
-                  <ion-icon name="bag-handle" style="font-size: 13px;"></ion-icon>
-                  Order Now
-                </button>
+${cake.isStockOut ? `
+                  <button type="button" class="btn-cake-order" disabled style="background: #9ca3af !important; color: #ffffff !important; opacity: 0.65; cursor: not-allowed !important; pointer-events: none; border: none; box-shadow: none;">
+                    <ion-icon name="ban-outline" style="font-size: 13px;"></ion-icon>
+                    Out of Stock
+                  </button>
+                ` : `
+                  <button type="button" class="btn-cake-order">
+                    <ion-icon name="bag-handle" style="font-size: 13px;"></ion-icon>
+                    Order Now
+                  </button>
+                `}
                 <button type="button" class="btn-cake-enquiry" title="Enquire on WhatsApp">
                   <ion-icon name="logo-whatsapp" style="font-size: 17px;"></ion-icon>
                 </button>
@@ -15150,6 +15680,8 @@
             confirmBuyBtn.disabled = true;
             confirmBuyBtn.style.opacity = "0.5";
             confirmBuyBtn.style.cursor = "not-allowed";
+            if (confirmBuyText) confirmBuyText.textContent = "Out of Stock - Unavailable";
+            confirmBuyBtn.style.cursor = "not-allowed";
             if (confirmBuyText) confirmBuyText.textContent = "Currently Out of Stock ❌";
           } else {
             confirmBuyBtn.disabled = false;
@@ -15904,6 +16436,8 @@
               totalPrice: priceInfo.totalPrice,
               cakeMsg: cakeMsg,
               cakeDesc: cakeDesc,
+              isPhotoCake: Boolean(isCake && isBuyNowPhotoCakeActive),
+              photoCakeCharge: Boolean(isCake && isBuyNowPhotoCakeActive) ? getPhotoCakePricing(custDate, custTime).charge : 0,
               customerName: custName,
               customerPhone: custPhone,
               shopId: shopId,
@@ -15978,6 +16512,18 @@
             msg += `• *Shape:* ${selectedCakeShape}\n`;
           }
           msg += `• *Type:* ${eggPref}\n`;
+          if (isCake && isBuyNowPhotoCakeActive) {
+            const photoP = getPhotoCakePricing(custDate, custTime);
+            msg += `• *Cake Finish:* 📸 Photo Cake (+₹${photoP.charge} ${photoP.isRush ? 'Express Rush' : 'Standard'})
+`;
+            if (buyNowPhotoCakeDataUrl) {
+              msg += `• *Photo Attached:* Yes (Customer selected photo for cake)
+`;
+            } else {
+              msg += `• *Photo on Cake:* Customer will send photo in this chat
+`;
+            }
+          }
           msg += `──────────────────────────\n`;
           msg += `💰 *Price:*\n`;
           if (isCake || Number(priceInfo.designCharge) === 0) {
