@@ -13518,6 +13518,15 @@
         }
       }
 
+      function updateOrdersTabBadge() {
+        const badge = document.getElementById("ordersTabBadge");
+        if (!badge) return;
+
+        const orderCount = getCustomerOrders().length;
+        badge.textContent = orderCount > 99 ? "99+" : String(orderCount);
+        badge.style.display = orderCount ? "inline-block" : "none";
+      }
+
       function saveCustomerOrders(list) {
         try {
           const deduplicated = deduplicateOrdersList(list);
@@ -14855,7 +14864,23 @@
           card.innerHTML = `
             <div class="cake-card-img-wrap">
               ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-              ${cake.isStockOut ? `
+              ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+              <span class="cake-card-badge">${catIcon} ${catName}</span>
+              <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+            </div>
+            <div class="cake-card-body">
+              <div>
+                <div class="cake-card-title">${cakeName}</div>
+                ${cake.description ? `<div class="cake-card-desc">${cake.description}</div>` : ""}
+                <div class="cake-card-weights" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;">
+                  ${weightBadgesHtml}
+                </div>
+                <div class="cake-card-price-row">
+                  ${priceDisplayHtml}
+                </div>
+              </div>
+              <div class="cake-card-btn-row">
+                ${cake.isStockOut ? `
                   <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);">
                     <ion-icon name="calendar-outline" style="font-size: 13px;"></ion-icon>
                     Pre-Order for Tomorrow
@@ -14872,14 +14897,6 @@
               </div>
             </div>
           `;
-          if (cake.uri) {
-            const image = document.createElement("img");
-            image.src = cake.uri;
-            image.alt = cakeName;
-            image.loading = index < 4 ? "eager" : "lazy";
-            image.decoding = "async";
-            card.querySelector(".cake-card-img-wrap").prepend(image);
-          }
 
           // Image tap opens Lightbox
           card
@@ -16258,7 +16275,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=9').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=10').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
