@@ -3631,6 +3631,382 @@
         border-color: #f87171;
         color: #b91c1c;
       }
+
+      html,
+      body {
+        min-height: 100%;
+        overscroll-behavior: none;
+      }
+
+      body {
+        background:
+          radial-gradient(ellipse at 12% 0%, rgba(255, 228, 230, 0.48), transparent 34rem),
+          #f6f3ef;
+      }
+
+      #app {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+        box-shadow: 0 0 48px rgba(55, 37, 30, 0.09);
+      }
+
+      .screen-view {
+        padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+        overscroll-behavior-y: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #e7cfd0 transparent;
+      }
+
+      .cat-header,
+      .gallery-header,
+      .detail-header,
+      .admin-header {
+        flex-shrink: 0;
+      }
+
+      .cat-header {
+        padding-top: 20px;
+      }
+
+      .cat-title,
+      .gallery-title,
+      .detail-title {
+        letter-spacing: -0.035em;
+      }
+
+      .search-bar-box {
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .search-bar-box:focus-within {
+        border-color: #fb7185;
+        box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.09);
+      }
+
+      .search-bar-box input {
+        min-width: 0;
+        font-size: 16px;
+      }
+
+      .view-all-banner,
+      .cat-card,
+      .cake-catalog-card,
+      .photo-item-card {
+        box-shadow: 0 5px 16px rgba(58, 38, 31, 0.055);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .cat-card,
+      .cake-catalog-card {
+        border-color: rgba(231, 220, 213, 0.9);
+      }
+
+      .tab-item {
+        min-width: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .tab-icon {
+        line-height: 1;
+      }
+
+      .bottom-tab-bar {
+        height: calc(76px + env(safe-area-inset-bottom, 0px));
+        padding: 8px 8px env(safe-area-inset-bottom, 0px);
+        border-top: 1px solid rgba(231, 220, 213, 0.72);
+        box-shadow: 0 -8px 28px rgba(55, 37, 30, 0.07);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+      }
+
+      .tab-item.active .tab-icon {
+        transform: translateY(-1px);
+      }
+
+      .tab-icon,
+      .tab-label {
+        transition: transform 0.18s ease, color 0.18s ease;
+      }
+
+      button,
+      a,
+      [role="button"],
+      .cat-card {
+        touch-action: manipulation;
+      }
+
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      [role="button"]:focus-visible,
+      .tab-item:focus-visible {
+        outline: 3px solid rgba(225, 29, 72, 0.45);
+        outline-offset: 3px;
+      }
+
+      @media (max-width: 380px) {
+        .cat-header {
+          gap: 8px;
+          padding: 14px 12px 8px;
+        }
+
+        .header-text-group {
+          min-width: 0;
+        }
+
+        .cat-title {
+          font-size: 23px;
+        }
+
+        .cat-subtitle {
+          font-size: 12px;
+        }
+
+        .header-actions-row {
+          gap: 5px;
+        }
+
+        .btn-round {
+          width: 36px;
+          height: 36px;
+          border-radius: 18px;
+        }
+
+        .btn-pill-menu {
+          height: 36px;
+          padding: 0 9px;
+          font-size: 12px;
+        }
+
+        .search-wrapper {
+          padding-right: 12px;
+          padding-left: 12px;
+        }
+
+        .view-all-banner {
+          margin-right: 12px;
+          margin-left: 12px;
+        }
+
+        .cat-grid,
+        .cakes-catalog-grid,
+        .photo-grid {
+          gap: 9px;
+          padding-right: 12px;
+          padding-left: 12px;
+        }
+
+        .tab-label {
+          font-size: 9px;
+        }
+
+        #smartInstallBanner {
+          padding-right: 10px !important;
+          padding-left: 10px !important;
+        }
+
+        #smartInstallBannerSub {
+          display: none;
+        }
+      }
+
+      @media (min-width: 600px) {
+        .cat-grid,
+        .cakes-catalog-grid,
+        .photo-grid {
+          grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+          gap: 18px;
+          padding-right: clamp(24px, 4vw, 56px);
+          padding-left: clamp(24px, 4vw, 56px);
+        }
+
+        .cat-header,
+        .gallery-header,
+        .detail-header,
+        .admin-header {
+          padding-right: clamp(24px, 4vw, 56px);
+          padding-left: clamp(24px, 4vw, 56px);
+        }
+
+        .search-wrapper {
+          padding-right: clamp(24px, 4vw, 56px);
+          padding-left: clamp(24px, 4vw, 56px);
+        }
+
+        .view-all-banner {
+          margin-right: clamp(24px, 4vw, 56px);
+          margin-left: clamp(24px, 4vw, 56px);
+        }
+
+        #recentPhotosQuickBox {
+          margin-right: clamp(24px, 4vw, 56px) !important;
+          margin-left: clamp(24px, 4vw, 56px) !important;
+        }
+      }
+
+      @media (min-width: 768px) {
+        #app {
+          max-width: 1440px;
+          border-right: 1px solid rgba(231, 220, 213, 0.5);
+          border-left: 1px solid rgba(231, 220, 213, 0.5);
+        }
+
+        .cat-header {
+          padding-top: 28px;
+          padding-bottom: 16px;
+        }
+
+        .cat-title {
+          font-size: clamp(30px, 3vw, 40px);
+        }
+
+        .cat-subtitle {
+          margin-top: 6px;
+          font-size: 14px;
+        }
+
+        .search-wrapper {
+          padding-top: 12px;
+          padding-bottom: 18px;
+        }
+
+        .search-bar-box {
+          max-width: 920px;
+          height: 54px;
+          margin: 0 auto;
+        }
+
+        .view-all-banner {
+          min-height: 76px;
+          margin-top: 0;
+          margin-bottom: 20px;
+          padding: 16px 20px;
+          border-radius: 20px;
+        }
+
+        .banner-title {
+          font-size: 14px;
+        }
+
+        .banner-sub {
+          font-size: 12px;
+        }
+
+        .bottom-tab-bar {
+          height: 82px;
+          padding: 8px max(24px, calc((100% - 820px) / 2));
+        }
+
+        .tab-item {
+          max-width: 164px;
+          border-radius: 14px;
+        }
+
+        .tab-item:hover {
+          color: var(--primary);
+          background: #fff7f7;
+        }
+
+        .tab-icon {
+          margin-bottom: 5px;
+          font-size: 22px;
+        }
+
+        .tab-label {
+          font-size: 11px;
+        }
+
+        .cat-card {
+          padding: 12px;
+          border-radius: 22px;
+        }
+
+        .cat-card:hover,
+        .cake-catalog-card:hover,
+        .view-all-banner:hover {
+          transform: translateY(-4px);
+          border-color: #fbc4cb;
+          box-shadow: 0 14px 30px rgba(72, 42, 35, 0.1);
+        }
+
+        .cat-card-name {
+          font-size: 14px;
+        }
+
+        .photo-item-card {
+          border-radius: 18px;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        .cat-grid,
+        .cakes-catalog-grid,
+        .photo-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 22px;
+          padding-right: 64px;
+          padding-left: 64px;
+        }
+
+        .cat-header,
+        .gallery-header,
+        .detail-header,
+        .admin-header,
+        .search-wrapper {
+          padding-right: 64px;
+          padding-left: 64px;
+        }
+
+        .view-all-banner {
+          margin-right: 64px;
+          margin-left: 64px;
+        }
+
+        #recentPhotosQuickBox {
+          margin-right: 64px !important;
+          margin-left: 64px !important;
+        }
+      }
+
+      @media (max-height: 480px) and (orientation: landscape) {
+        .bottom-tab-bar {
+          height: 58px;
+          padding-top: 4px;
+        }
+
+        .tab-icon {
+          margin-bottom: 1px;
+          font-size: 18px;
+        }
+
+        .tab-label {
+          font-size: 9px;
+        }
+
+        .screen-view {
+          padding-bottom: 72px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -7253,11 +7629,6 @@
     <div class="buy-now-modal" id="buyNowModal">
       <div class="buy-now-card">
         <div class="buy-now-header">
-        <!-- Stock Out Warning Banner -->
-        <div id="buyNowStockOutBanner" style="display: none; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; align-items: center; gap: 8px; color: #991b1b; font-size: 12.5px; font-weight: 700;">
-          <ion-icon name="alert-circle" style="font-size: 22px; color: #dc2626; flex-shrink: 0;"></ion-icon>
-          <span>This cake is currently <strong>Out of Stock</strong>. Ordering is temporarily disabled.</span>
-        </div>
           <div style="display: flex; align-items: center; gap: 8px">
             <ion-icon
               name="bag-handle"
@@ -7294,6 +7665,39 @@
           >
             <ion-icon name="close"></ion-icon>
           </button>
+        </div>
+        <!-- Stock Out Warning Banner (Full-Width, 2-3 Lines) -->
+        <div
+          id="buyNowStockOutBanner"
+          style="
+            display: none;
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-top: 10px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+            gap: 10px;
+            color: #991b1b;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06);
+          "
+        >
+          <ion-icon
+            name="alert-circle"
+            style="font-size: 24px; color: #dc2626; flex-shrink: 0; margin-top: 1px;"
+          ></ion-icon>
+          <div style="flex: 1; line-height: 1.45;">
+            <div style="font-size: 13.5px; font-weight: 800; color: #b91c1c; margin-bottom: 2px;">
+              This cake is currently Out of Stock
+            </div>
+            <div style="font-size: 11.5px; color: #7f1d1d; font-weight: 600;">
+              Ordering is temporarily disabled for this cake design.
+            </div>
+            <div style="font-size: 11px; color: #991b1b; margin-top: 2px;">
+              Please explore our other handcrafted cakes or contact us on WhatsApp!
+            </div>
+          </div>
         </div>
 
         <div class="buy-now-body">
@@ -7784,7 +8188,7 @@
                 "
               >
                 <ion-icon name="camera" style="font-size: 15px; color: var(--primary)"></ion-icon>
-                <span>📸 Photo Cake</span>
+                <span> Photo Cake</span>
               </button>
             </div>
 

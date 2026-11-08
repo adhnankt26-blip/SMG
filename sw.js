@@ -1,5 +1,5 @@
 // Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v5 (Cake Studio Logo & Instant Refresh)
-const CACHE_NAME = 'studio-cake-v9';
+const CACHE_NAME = 'studio-cake-v10';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
