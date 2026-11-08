@@ -4649,7 +4649,6 @@
                 <button
                   type="button"
                   id="btnDirectCakeOrderWhatsApp"
-                  onclick="handleDirectCakeOrderWhatsApp()"
                   class="btn-wa-order"
                   style="
                     height: 48px;
@@ -7871,7 +7870,6 @@
           <button
             type="button"
             id="btnConfirmBuyNow"
-            onclick="handleConfirmBuyNow()"
             class="btn-wa-order"
             style="
               width: 100%;
@@ -9881,6 +9879,107 @@
       </div>
     </div>
 
+    
+    <!-- ========================================================
+       ORDER DETAILS & RECEIPT MODAL
+       ======================================================== -->
+    <div
+      class="customer-rate-modal"
+      id="modalOrderDetailsReceipt"
+      style="display: none"
+    >
+      <div
+        class="playstore-rating-card"
+        style="
+          max-width: 480px;
+          padding: 20px;
+          border-radius: 22px;
+          background: #ffffff;
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+        "
+      >
+        <!-- Modal Header -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                background: #fdf2f8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--primary);
+                font-size: 22px;
+                border: 1px solid #fbcfe8;
+              "
+            >
+              <ion-icon name="receipt-outline"></ion-icon>
+            </div>
+            <div>
+              <div
+                style="font-size: 16px; font-weight: 800; color: #0f172a"
+                id="receiptModalTitle"
+              >
+                Order Receipt
+              </div>
+              <div
+                style="font-size: 11px; color: #64748b"
+                id="receiptModalSubtitle"
+              >
+                Cake Studio Verified Order
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="btnCloseOrderReceipt"
+            style="
+              background: #f1f5f9;
+              border: none;
+              width: 34px;
+              height: 34px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              color: #475569;
+              font-size: 20px;
+              transition: all 0.2s;
+            "
+          >
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Receipt Body Container -->
+        <div
+          id="receiptModalContent"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 72vh;
+            overflow-y: auto;
+            padding-right: 4px;
+          "
+        >
+          <!-- Dynamic Content -->
+        </div>
+      </div>
+    </div>
+
     <!-- ========================================================
        APPLICATION JAVASCRIPT
        ======================================================== -->
@@ -10775,11 +10874,44 @@
 
       
       // ========================================================
+      // ========================================================
       // CUSTOMER ORDERS LOGIC & PERSISTENCE
       // ========================================================
+      function deduplicateOrdersList(list) {
+        if (!Array.isArray(list)) return [];
+        const seen = [];
+        return list.filter((order) => {
+          if (!order) return false;
+          const isDup = seen.some((prev) => {
+            if (prev.id && order.id && prev.id === order.id) return true;
+            const sameCake = (prev.cakeName || "").trim().toLowerCase() === (order.cakeName || "").trim().toLowerCase();
+            const sameWeight = (prev.weight || "").trim().toLowerCase() === (order.weight || "").trim().toLowerCase();
+            const samePrice = Number(prev.totalPrice || 0) === Number(order.totalPrice || 0);
+            const sameMsg = (prev.cakeMsg || "").trim().toLowerCase() === (order.cakeMsg || "").trim().toLowerCase();
+            const p1 = (prev.customerPhone || "").replace(/\D/g, "").slice(-10);
+            const p2 = (order.customerPhone || "").replace(/\D/g, "").slice(-10);
+            const sameCust = p1 && p2 && p1 === p2;
+            const t1 = Number(prev.createdAt) || 0;
+            const t2 = Number(order.createdAt) || 0;
+            const closeTime = (t1 && t2 && Math.abs(t1 - t2) < 60000) || ((prev.dateStr || "") === (order.dateStr || "") && Boolean(prev.dateStr));
+            return sameCake && sameWeight && samePrice && sameMsg && (sameCust || (!p1 && !p2)) && closeTime;
+          });
+          if (!isDup) {
+            seen.push(order);
+            return true;
+          }
+          return false;
+        });
+      }
+
       function getCustomerOrders() {
         try {
-          return JSON.parse(localStorage.getItem("cake_studio_user_orders") || "[]");
+          const raw = JSON.parse(localStorage.getItem("cake_studio_user_orders") || "[]");
+          const deduplicated = deduplicateOrdersList(raw);
+          if (deduplicated.length !== raw.length) {
+            localStorage.setItem("cake_studio_user_orders", JSON.stringify(deduplicated));
+          }
+          return deduplicated;
         } catch(e) {
           return [];
         }
@@ -10787,25 +10919,188 @@
 
       function saveCustomerOrders(list) {
         try {
-          localStorage.setItem("cake_studio_user_orders", JSON.stringify(list));
+          const deduplicated = deduplicateOrdersList(list);
+          localStorage.setItem("cake_studio_user_orders", JSON.stringify(deduplicated));
           updateOrdersTabBadge();
         } catch(e) {}
       }
 
-      function updateOrdersTabBadge() {
-        const badge = document.getElementById("ordersTabBadge");
-        const orders = getCustomerOrders();
-        if (badge) {
-          if (orders.length > 0) {
-            badge.textContent = orders.length;
-            badge.style.display = "inline-block";
-          } else {
-            badge.style.display = "none";
-          }
-        }
+      function closeOrderReceiptModal() {
+        const modal = document.getElementById("modalOrderDetailsReceipt");
+        if (modal) modal.style.display = "none";
       }
 
-      let isFetchingOrdersFromCloud = false;
+      function openOrderReceiptModal(order) {
+        if (!order) return;
+        const modal = document.getElementById("modalOrderDetailsReceipt");
+        const titleEl = document.getElementById("receiptModalTitle");
+        const subEl = document.getElementById("receiptModalSubtitle");
+        const bodyEl = document.getElementById("receiptModalContent");
+        if (!modal || !bodyEl) return;
+
+        const orderId = order.id || "N/A";
+        const cakeName = order.cakeName || order.flavour || "Handcrafted Cake";
+        const category = order.categoryName || "Special Cake";
+        const weight = order.weight || "1 Kg";
+        const egg = order.eggPref || "Regular 🥚";
+        const cakeImg = order.imageUri || "splash.jpg";
+        const totalPrice = order.totalPrice || 0;
+        const basePrice = order.basePrice || totalPrice;
+        const designCharge = order.designCharge || 0;
+        const dateStr = order.dateStr || "";
+        const custName = order.customerName || "Customer";
+        const rawCustPhone = (order.customerPhone || "").replace(/\D/g, "");
+        const custPhone = rawCustPhone.slice(-10);
+        const branchName = order.branchName || "Cake Studio";
+        const branchPhone = (order.branchWhatsApp || "917909299911").replace(/\D/g, "");
+        const delivDate = order.deliveryDate || "Standard Delivery";
+        const delivTime = order.deliveryTime || "";
+
+        if (titleEl) titleEl.textContent = `Order #${orderId}`;
+        if (subEl) subEl.textContent = dateStr ? `Placed on ${dateStr}` : "Cake Studio WhatsApp Order";
+
+        bodyEl.innerHTML = `
+          <!-- Status Banner -->
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <ion-icon name="checkmark-circle" style="font-size: 20px; color: #059669;"></ion-icon>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #065f46;">Order Confirmed</div>
+                <div style="font-size: 11px; color: #047857;">Sent via WhatsApp to Bakery</div>
+              </div>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: #059669; background: #ffffff; padding: 3px 8px; border-radius: 8px; border: 1px solid #a7f3d0;">
+              #${orderId}
+            </span>
+          </div>
+
+          <!-- Cake Details Card -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; display: flex; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+            <div style="width: 82px; height: 82px; border-radius: 12px; overflow: hidden; background: #f8fafc; border: 1px solid #e2e8f0; flex-shrink: 0;">
+              <img src="${cakeImg}" alt="${cakeName}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.3;">
+                ${cakeName}
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+                <span style="font-size: 10.5px; font-weight: 700; background: #f1f5f9; color: #334155; padding: 2px 7px; border-radius: 6px;">${category}</span>
+                <span style="font-size: 10.5px; font-weight: 700; background: #fee2e2; color: #be123c; padding: 2px 7px; border-radius: 6px;">${weight}</span>
+                <span style="font-size: 10.5px; font-weight: 700; background: #e0e7ff; color: #4338ca; padding: 2px 7px; border-radius: 6px;">${egg}</span>
+                ${order.shape ? `<span style="font-size: 10.5px; font-weight: 700; background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 6px;">${order.shape}</span>` : ''}
+              </div>
+              ${order.cakeMsg ? `<div style="font-size: 11.5px; color: #334155; font-style: italic; background: #f8fafc; padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--primary); margin-top: 4px;">✍️ "${order.cakeMsg}"</div>` : ''}
+              ${order.cakeDesc ? `<div style="font-size: 11px; color: #64748b; margin-top: 4px;">📝 Note: ${order.cakeDesc}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- Customer Contact Details Card -->
+          <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 14px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #9d174d; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+              <ion-icon name="person-outline" style="font-size: 14px;"></ion-icon> Customer Contact Details
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <div style="font-size: 13.5px; font-weight: 800; color: #1e293b;">${custName}</div>
+                <div style="font-size: 12px; color: #475569; font-weight: 600;">📞 +91 ${custPhone || 'Not provided'}</div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                ${custPhone ? `
+                  <a href="tel:${custPhone}" style="background: #ffffff; color: var(--primary); border: 1px solid #f472b6; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                    <ion-icon name="call-outline"></ion-icon> Call
+                  </a>
+                  <a href="https://wa.me/91${custPhone}" target="_blank" style="background: #25d366; color: #ffffff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(37,211,102,0.25);">
+                    <ion-icon name="logo-whatsapp"></ion-icon> WhatsApp
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bakery Store & Delivery Details -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+              <ion-icon name="storefront-outline" style="font-size: 14px; color: var(--primary);"></ion-icon> Bakery Store & Delivery
+            </div>
+            <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 2px;">
+              📍 ${branchName}
+            </div>
+            <div style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+              📅 Delivery Date: <b>${delivDate}</b> ${delivTime ? `• ⏰ ${delivTime}` : ''}
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 8px; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 12px; font-weight: 600; color: #334155;">📞 Store: +91 ${branchPhone}</span>
+              <div style="display: flex; gap: 6px;">
+                <a href="tel:${branchPhone}" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                  <ion-icon name="call-outline"></ion-icon> Call Store
+                </a>
+                <a href="https://wa.me/${branchPhone}?text=${encodeURIComponent('Hello Cake Studio! Regarding my order #' + orderId)}" target="_blank" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                  <ion-icon name="logo-whatsapp"></ion-icon> Chat
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price & Bill Summary -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;">
+            <div style="font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 8px;">
+              Bill Summary
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 4px;">
+              <span>Base Cake Price (${weight})</span>
+              <span>₹${basePrice}</span>
+            </div>
+            ${designCharge > 0 ? `
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 4px;">
+                <span>Design & Customization</span>
+                <span>₹${designCharge}</span>
+              </div>
+            ` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 4px;">
+              <span style="font-size: 14px; font-weight: 800; color: #0f172a;">Total Payable Amount</span>
+              <span style="font-size: 18px; font-weight: 900; color: var(--primary);">₹${totalPrice}</span>
+            </div>
+          </div>
+
+          <!-- Modal Action Buttons -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+            <button type="button" id="btnReceiptTrackWhatsApp" style="width: 100%; height: 46px; border-radius: 12px; background: #25d366; color: #ffffff; border: none; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);">
+              <ion-icon name="logo-whatsapp" style="font-size: 18px;"></ion-icon> Track / Chat on WhatsApp
+            </button>
+            ${order.cakeId ? `
+              <button type="button" id="btnReceiptViewInCatalog" style="width: 100%; height: 42px; border-radius: 12px; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <ion-icon name="restaurant-outline" style="font-size: 16px; color: var(--primary);"></ion-icon> View Cake in Catalog / Re-order
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        // Wire modal action buttons
+        document.getElementById("btnReceiptTrackWhatsApp")?.addEventListener("click", () => {
+          const waNum = branchPhone || "917909299911";
+          const msg = `Hello Cake Studio! 👋\nI would like to track my order:\n\n` +
+            `📦 *Order Reference:* #${orderId}\n` +
+            `🎂 *Cake:* ${cakeName}\n` +
+            `⚖️ *Weight:* ${weight}\n` +
+            `💰 *Amount:* ₹${totalPrice}\n` +
+            `👤 *Customer:* ${custName} (${custPhone})\n` +
+            `📍 *Branch:* ${branchName}\n` +
+            `📅 *Delivery Date:* ${delivDate}\n\n` +
+            `🔗 *Order Details:* ${liveWebUrl}/?cake=${encodeURIComponent(order.cakeId || "")}&order=${encodeURIComponent(orderId)}`;
+          window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, "_blank");
+        });
+
+        document.getElementById("btnReceiptViewInCatalog")?.addEventListener("click", () => {
+          closeOrderReceiptModal();
+          if (order.cakeId) {
+            openDirectCakeView(order.cakeId);
+          }
+        });
+
+        modal.style.display = "flex";
+      }
+
+            let isFetchingOrdersFromCloud = false;
 
       async function renderCustomerOrdersScreen() {
         const listEl = document.getElementById("customerOrdersList");
@@ -10885,6 +11180,11 @@
           const dateStr = order.dateStr || "";
           const cakeImg = order.imageUri || "splash.jpg";
 
+          const custName = order.customerName || "Customer";
+          const custPhoneRaw = (order.customerPhone || "").replace(/\D/g, "");
+          const custPhone = custPhoneRaw.slice(-10);
+          const branchPhone = (order.branchWhatsApp || "917909299911").replace(/\D/g, "");
+
           card.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f3f4f6; padding-bottom: 9px; margin-bottom: 11px;">
               <div style="display: flex; align-items: center; gap: 6px;">
@@ -10896,12 +11196,12 @@
               </span>
             </div>
 
-            <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-              <div class="order-thumb-wrap" style="width: 72px; height: 72px; border-radius: 12px; overflow: hidden; background: #f3f4f6; flex-shrink: 0; cursor: pointer; border: 1px solid #f3f4f6;">
+            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+              <div class="order-thumb-wrap" style="width: 76px; height: 76px; border-radius: 12px; overflow: hidden; background: #f3f4f6; flex-shrink: 0; cursor: pointer; border: 1px solid #f3f4f6;" title="Tap to view full receipt">
                 <img src="${cakeImg}" alt="${cakeName}" style="width: 100%; height: 100%; object-fit: cover;">
               </div>
               <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 14px; font-weight: 800; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;">
+                <div style="font-size: 14.5px; font-weight: 800; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;">
                   ${cakeName}
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
@@ -10916,9 +11216,27 @@
                   </span>
                 </div>
                 ${order.cakeMsg ? `<div style="font-size: 11px; color: #374151; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">✍️ "${order.cakeMsg}"</div>` : ''}
-                <div style="font-size: 10.5px; color: #6b7280; margin-top: 2px;">
-                  📍 ${branch} ${order.deliveryDate ? `• 📅 ${order.deliveryDate}` : ''}
+                <div style="font-size: 10.5px; color: #6b7280; margin-top: 3px;">
+                  📍 <b>${branch}</b> ${order.deliveryDate ? `• 📅 ${order.deliveryDate}` : ''}
                 </div>
+              </div>
+            </div>
+
+            <!-- Customer Details & Direct Call Options -->
+            <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 10px; padding: 7px 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
+              <div style="display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden;">
+                <ion-icon name="person-circle-outline" style="font-size: 18px; color: var(--primary); flex-shrink: 0;"></ion-icon>
+                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <span style="font-weight: 800; color: #111827;">${custName}</span>
+                  <span style="color: #6b7280; font-weight: 600;"> • 📞 +91 ${custPhone || 'N/A'}</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                ${custPhone ? `
+                  <a href="tel:${custPhone}" title="Call Customer" style="background: #ffffff; color: var(--primary); border: 1px solid #f472b6; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">
+                    <ion-icon name="call-outline"></ion-icon> Call
+                  </a>
+                ` : ''}
               </div>
             </div>
 
@@ -10927,13 +11245,18 @@
                 <span style="font-size: 9.5px; color: #9ca3af; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Total Amount</span>
                 <div style="font-size: 16px; font-weight: 800; color: var(--primary);">₹${price}</div>
               </div>
-              <div style="display: flex; gap: 6px;">
-                <button type="button" class="btn-track-order-wa" style="background: #25d366; color: #ffffff; border: none; padding: 7px 13px; border-radius: 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);">
-                  <ion-icon name="logo-whatsapp" style="font-size: 14px;"></ion-icon> Track / Chat
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn-view-order-receipt" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 7px 11px; border-radius: 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                  <ion-icon name="receipt-outline" style="font-size: 13px;"></ion-icon> View
                 </button>
-                <button type="button" class="btn-view-order-cake" style="background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; padding: 7px 11px; border-radius: 10px; font-size: 11.5px; font-weight: 700; cursor: pointer;">
-                  View
+                <button type="button" class="btn-track-order-wa" style="background: #25d366; color: #ffffff; border: none; padding: 7px 11px; border-radius: 10px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);">
+                  <ion-icon name="logo-whatsapp" style="font-size: 13px;"></ion-icon> Track
                 </button>
+                ${branchPhone ? `
+                  <a href="tel:${branchPhone}" title="Call Store" style="background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+                    <ion-icon name="call-outline" style="font-size: 14px;"></ion-icon>
+                  </a>
+                ` : ''}
                 <button type="button" class="btn-del-order" title="Remove from My Orders" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; width: 32px; height: 32px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;">
                   <ion-icon name="trash-outline" style="font-size: 14px;"></ion-icon>
                 </button>
@@ -10943,27 +11266,23 @@
 
           // Track on WhatsApp
           card.querySelector(".btn-track-order-wa")?.addEventListener("click", () => {
-            const waNum = (order.branchWhatsApp || "917909299911").replace(/\D/g, "");
+            const waNum = branchPhone || "917909299911";
             const msg = `Hello Cake Studio! 👋\nI would like to track my order:\n\n` +
               `📦 *Order Reference:* #${order.id}\n` +
               `🎂 *Cake:* ${cakeName}\n` +
               `⚖️ *Weight:* ${weight}\n` +
               `💰 *Amount:* ₹${price}\n` +
+              `👤 *Customer:* ${custName} (${custPhone})\n` +
               `📍 *Branch:* ${branch}\n\n` +
               `🔗 *Order Details:* ${liveWebUrl}/?cake=${encodeURIComponent(order.cakeId || "")}&order=${encodeURIComponent(order.id)}`;
             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, "_blank");
           });
 
-          // View cake
-          const viewBtn = card.querySelector(".btn-view-order-cake");
+          // Open Full Order Receipt Modal
+          const viewBtn = card.querySelector(".btn-view-order-receipt");
           const thumbWrap = card.querySelector(".order-thumb-wrap");
-          const viewAction = () => {
-            if (order.cakeId) {
-              openDirectCakeView(order.cakeId);
-            }
-          };
-          viewBtn?.addEventListener("click", viewAction);
-          thumbWrap?.addEventListener("click", viewAction);
+          viewBtn?.addEventListener("click", () => openOrderReceiptModal(order));
+          thumbWrap?.addEventListener("click", () => openOrderReceiptModal(order));
 
           // Delete from history
           card.querySelector(".btn-del-order")?.addEventListener("click", () => {
@@ -14403,9 +14722,25 @@
         const shapeEl = document.getElementById("buyNowCalcShape");
         if (shapeEl) shapeEl.textContent = "Round";
 
-        // For Cakes: default to 0.5 Kg
-        // For Category & All Photos: default to photo's MOQ (e.g. 1 Kg, 2 Kg)
-        selectedFlavour = "Choco Truffle";
+        // Dynamically detect cake flavour and design name
+        const photoName = (photo.name || photo.title || "").trim();
+        const photoFlavour = (photo.flavour || "").trim();
+        const matchedFlavour = CAKE_PRICING_CATALOG.find(
+          (p) => p.name.toLowerCase() === photoName.toLowerCase() || p.name.toLowerCase() === photoFlavour.toLowerCase()
+        );
+
+        if (matchedFlavour) {
+          selectedFlavour = matchedFlavour.name;
+        } else if (isCake && photoName) {
+          selectedFlavour = photoName;
+        } else if (photoFlavour) {
+          selectedFlavour = photoFlavour;
+        } else if (photoName && (!selectedFlavour || selectedFlavour === "Choco Truffle")) {
+          selectedFlavour = photoName;
+        } else if (!selectedFlavour) {
+          selectedFlavour = "Black Forest";
+        }
+
         selectedWeight = isCake ? "0.5 Kg" : photoMoqStr;
         isMentionWeightActive = false;
         const customWeightInput = document.getElementById(
@@ -14817,13 +15152,18 @@
           const directCakeUrl = `${liveWebUrl}/?cake=${encodeURIComponent(orderData.photoId || "")}`;
           const nowIso = new Date().toISOString();
 
+          const cakeDesign = (orderData.cakeName || orderData.categoryName || orderData.flavour || "Cake").toString().trim();
+          const cakeFlavour = (orderData.flavour || orderData.cakeName || "Custom Flavour").toString().trim();
+          const itemDisplayName = cakeDesign !== cakeFlavour ? `${cakeDesign} (${cakeFlavour})` : cakeDesign;
+
           const items = [
             {
-              name: orderData.flavour,
-              flavour: orderData.flavour,
+              name: itemDisplayName,
+              cakeName: cakeDesign,
+              flavour: cakeFlavour,
               price: orderData.totalPrice,
               weight: numericWeight,
-              shape: "Customize",
+              shape: orderData.shape || "Customize",
               customLabel: orderData.messageOnCake?.trim() || null,
               description: orderData.description?.trim() || null,
               photoCakeUrl: orderData.imageUri || null,
@@ -14836,6 +15176,10 @@
           const docPayload = {
             id: orderId,
             billNumber: billNumber,
+            cakeName: cakeDesign,
+            flavour: cakeFlavour,
+            cakeFlavour: cakeFlavour,
+            categoryName: orderData.categoryName || "",
             userName: orderData.customerName?.trim() || "Online Customer",
             customerName: orderData.customerName?.trim() || "Online Customer",
             userPhone: orderData.customerPhone?.trim() || "Guest",
@@ -14861,7 +15205,6 @@
             eggType: "App Order",
             serviceType: "Delivery",
             shape: orderData.shape || "Customize",
-            flavour: orderData.flavour,
             weight: orderData.weight,
             quantity: 1,
             photoCakeUrl: orderData.imageUri || null,
@@ -14890,7 +15233,13 @@
         }
       }
 
+      let isOrderSubmitting = false;
+
       function handleConfirmBuyNow() {
+        if (isOrderSubmitting) {
+          console.warn("Order submission in progress, ignoring duplicate trigger.");
+          return;
+        }
         try {
           if (!buyNowTargetPhoto) {
             alert("Please choose a cake to place an order.");
@@ -15088,6 +15437,7 @@
           try {
             saveWebOrderToMerchant({
               photoId: buyNowTargetPhoto.id || "",
+              cakeName: buyNowTargetPhoto.name || buyNowTargetPhoto.title || catName || selectedFlavour,
               categoryName: catName,
               flavour: selectedFlavour,
               weight:
@@ -15273,7 +15623,24 @@
           ? "No Minimum (0.5 Kg)"
           : cakeMoq;
 
-        directSelectedFlavour = "Choco Truffle";
+        const directPhotoName = (photo.name || photo.title || "").trim();
+        const directPhotoFlavour = (photo.flavour || "").trim();
+        const directMatchedFlavour = CAKE_PRICING_CATALOG.find(
+          (p) => p.name.toLowerCase() === directPhotoName.toLowerCase() || p.name.toLowerCase() === directPhotoFlavour.toLowerCase()
+        );
+
+        if (directMatchedFlavour) {
+          directSelectedFlavour = directMatchedFlavour.name;
+        } else if (isCake && directPhotoName) {
+          directSelectedFlavour = directPhotoName;
+        } else if (directPhotoFlavour) {
+          directSelectedFlavour = directPhotoFlavour;
+        } else if (directPhotoName && (!directSelectedFlavour || directSelectedFlavour === "Choco Truffle")) {
+          directSelectedFlavour = directPhotoName;
+        } else if (!directSelectedFlavour) {
+          directSelectedFlavour = "Black Forest";
+        }
+
         directSelectedWeight = cakeMoq;
         directIsMentionWeightActive = false;
         const directCustomWeightInput = document.getElementById(
@@ -15725,6 +16092,7 @@
           try {
             saveWebOrderToMerchant({
               photoId: directCakeTargetPhoto.id || "",
+              cakeName: directCakeTargetPhoto.name || directCakeTargetPhoto.title || catName || directSelectedFlavour,
               categoryName: catName,
               flavour: directSelectedFlavour,
               weight: directSelectedWeight,
