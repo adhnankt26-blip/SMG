@@ -1724,6 +1724,9 @@
         max-width: 540px;
         width: 100%;
         max-height: 90vh;
+        max-height: 90dvh;
+        box-sizing: border-box;
+        flex: 0 1 540px;
         display: flex;
         flex-direction: column;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
@@ -1745,12 +1748,19 @@
         justify-content: space-between;
         padding-bottom: 12px;
         border-bottom: 1px solid #f3f4f6;
+        flex-shrink: 0;
       }
 
       .buy-now-body {
+        flex: 1 1 auto;
+        min-height: 0;
         overflow-y: auto;
         padding: 12px 0;
         -webkit-overflow-scrolling: touch;
+      }
+
+      .buy-now-card > div:last-child {
+        flex-shrink: 0;
       }
 
       .buy-now-cake-row {
@@ -8388,7 +8398,6 @@
             </div>
           </div>
         </div>
-        </div>
 
         <div class="buy-now-body">
           <!-- Cake Info Preview -->
@@ -8527,6 +8536,30 @@
                 id="buyNowDesignChargeText"
                 style="font-weight: 700; color: #111827"
                 >₹150</span
+              >
+            </div>
+            <div
+              id="buyNowPhotoCakeRow"
+              style="
+                display: none;
+                justify-content: space-between;
+                font-size: 11px;
+                color: #be123c;
+                font-weight: 700;
+                margin-bottom: 2px;
+              "
+            >
+              <span style="display: flex; align-items: center; gap: 4px">
+                <ion-icon
+                  name="camera"
+                  style="font-size: 13px; color: #be123c"
+                ></ion-icon>
+                Edible Photo Cake Print:
+              </span>
+              <span
+                id="buyNowPhotoCakeFeeText"
+                style="font-weight: 800; color: #be123c"
+                >+₹250</span
               >
             </div>
             <div
@@ -8904,7 +8937,7 @@
                   margin-bottom: 8px;
                 "
               >
-                📸 <strong>Edible Photo Cake Print:</strong> Add your favourite photo on the cake! Charge is ₹250 (Tomorrow after 3:30 PM or future dates) or ₹400 for rush delivery (ordered after 3:00 PM for today or before 3:30 PM tomorrow).
+                📸 <strong>Edible Photo Cake Print:</strong> Add your favourite photo on the cake! Charge is ₹250 (Today, or tomorrow after 3:30 PM / future dates) or ₹400 for rush delivery (ordered after 3:00 PM today for delivery tomorrow before 3:30 PM).
               </div>
 
               <!-- Upload Photo for Cake -->
@@ -12904,14 +12937,15 @@
         let isRush = false;
         let reason = "";
 
-        if (isAfter3PMToday) {
-          if (!delivDate || delivDate === todayStr) {
-            isRush = true;
-            reason = "Order placed after 3:00 PM for same-day delivery requires express rush photo printing.";
-          } else if (delivDate === tomorrowStr && isDelivBefore330PM) {
-            isRush = true;
-            reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing.";
-          }
+        // Rule:
+        // - Same day (innu thanne): +₹250
+        // - Tomorrow before 3:30 PM (when ordered after 3:00 PM today): Rush +₹400
+        // - Tomorrow after 3:30 PM or future dates: Standard +₹250
+        if (delivDate === todayStr) {
+          isRush = false;
+        } else if (isAfter3PMToday && delivDate === tomorrowStr && isDelivBefore330PM) {
+          isRush = true;
+          reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing.";
         }
 
         const charge = isRush ? 400 : 250;
@@ -14838,6 +14872,14 @@
               </div>
             </div>
           `;
+          if (cake.uri) {
+            const image = document.createElement("img");
+            image.src = cake.uri;
+            image.alt = cakeName;
+            image.loading = index < 4 ? "eager" : "lazy";
+            image.decoding = "async";
+            card.querySelector(".cake-card-img-wrap").prepend(image);
+          }
 
           // Image tap opens Lightbox
           card
@@ -16216,7 +16258,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=7').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=9').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17225,6 +17267,20 @@
       function openBuyNowModal(photo) {
         if (!photo) return;
         buyNowTargetPhoto = photo;
+        // Reset Photo Cake style selection
+        isBuyNowPhotoCakeActive = false;
+        hasShownPhotoRushPopup = false;
+        buyNowPhotoCakeDataUrl = "";
+        document.getElementById("btnBuyNowStyleRegular")?.classList.add("active");
+        document.getElementById("btnBuyNowStylePhoto")?.classList.remove("active");
+        const photoBoxEl = document.getElementById("buyNowPhotoCakeDetailsBox");
+        if (photoBoxEl) photoBoxEl.style.display = "none";
+        const photoBadgeEl = document.getElementById("buyNowPhotoCakePriceBadge");
+        if (photoBadgeEl) photoBadgeEl.style.display = "none";
+        const photoPreviewWrapEl = document.getElementById("buyNowPhotoCakePreviewWrap");
+        if (photoPreviewWrapEl) photoPreviewWrapEl.style.display = "none";
+        const photoFileInput = document.getElementById("buyNowPhotoCakeFileInput");
+        if (photoFileInput) photoFileInput.value = "";
         const isCake = isCakeCatalogTarget(photo);
         const cat = categories.find((c) => c.id === photo.categoryId);
         const catName = isCake
@@ -17447,6 +17503,45 @@
             selectedWeight,
             currentDc,
           );
+        }
+
+        // Add Photo Cake Fee (+₹250 or +₹400) if active
+        const custDateForPhoto = document.getElementById("buyNowDeliveryDate")?.value || "";
+        const custTimeForPhoto = document.getElementById("buyNowDeliveryTime")?.value || "";
+        let photoCakeFee = 0;
+        let photoCakePricingObj = null;
+
+        if (isCake && isBuyNowPhotoCakeActive) {
+          photoCakePricingObj = getPhotoCakePricing(custDateForPhoto, custTimeForPhoto);
+          photoCakeFee = photoCakePricingObj.charge;
+          priceInfo.totalPrice += photoCakeFee;
+        }
+
+        // Update Photo Cake Badge and Breakdown Row
+        const photoBadge = document.getElementById("buyNowPhotoCakePriceBadge");
+        if (photoBadge) {
+          if (isCake && isBuyNowPhotoCakeActive && photoCakePricingObj) {
+            photoBadge.style.display = "inline-block";
+            photoBadge.textContent = photoCakePricingObj.isRush ? "+₹400 Express Rush" : "+₹250 Photo Print";
+            photoBadge.style.background = photoCakePricingObj.isRush ? "#fef2f2" : "#ecfdf5";
+            photoBadge.style.color = photoCakePricingObj.isRush ? "#dc2626" : "#059669";
+            photoBadge.style.borderColor = photoCakePricingObj.isRush ? "#fecaca" : "#a7f3d0";
+          } else {
+            photoBadge.style.display = "none";
+          }
+        }
+
+        const photoRow = document.getElementById("buyNowPhotoCakeRow");
+        const photoFeeText = document.getElementById("buyNowPhotoCakeFeeText");
+        if (photoRow) {
+          if (isCake && isBuyNowPhotoCakeActive && photoCakePricingObj) {
+            photoRow.style.display = "flex";
+            if (photoFeeText) {
+              photoFeeText.innerHTML = `+₹${photoCakeFee} <span style="font-size: 10px; font-weight: 600; opacity: 0.85;">(${photoCakePricingObj.isRush ? "Rush" : "Standard"})</span>`;
+            }
+          } else {
+            photoRow.style.display = "none";
+          }
         }
 
         const totalPriceEl = document.getElementById("buyNowTotalPriceText");
@@ -18086,6 +18181,14 @@
                     ),
                 }
               : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
+
+          let photoCakeFee = 0;
+          if (isCake && isBuyNowPhotoCakeActive) {
+            const photoP = getPhotoCakePricing(custDate, custTime);
+            photoCakeFee = photoP.charge;
+            priceInfo.photoCakeCharge = photoCakeFee;
+            priceInfo.totalPrice += photoCakeFee;
+          }
 
           const photoRefId = (buyNowTargetPhoto.id || "cake")
             .slice(-6)
