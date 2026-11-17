@@ -1629,12 +1629,115 @@
       }
 
       .lightbox-footer {
-        max-width: 460px;
+        max-width: 480px;
         width: 100%;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+      }
+
+      .lightbox-cat-badge {
+        color: #ffffff;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        padding: 5px 16px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.2px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      }
+
+      .lightbox-actions {
+        display: flex;
         gap: 8px;
+        width: 100%;
+        align-items: center;
+      }
+
+      .btn-lb-action {
+        height: 48px;
+        border-radius: 16px;
+        border: none;
+        font-size: 13.5px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      }
+      .btn-lb-action:active {
+        transform: scale(0.96);
+      }
+
+      .btn-lb-download {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      }
+      .btn-lb-download:hover {
+        background: rgba(255, 255, 255, 0.22);
+        transform: translateY(-1px);
+      }
+      .btn-lb-download ion-icon {
+        font-size: 18px;
+      }
+
+      .btn-lb-buy {
+        flex: 1.4;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 18px rgba(225, 29, 72, 0.45);
+      }
+      .btn-lb-buy:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 22px rgba(225, 29, 72, 0.6);
+      }
+      .btn-lb-buy ion-icon {
+        font-size: 18px;
+      }
+
+      .btn-lb-enquiry {
+        flex: 1.1;
+        background: linear-gradient(135deg, #25d366 0%, #16a34a 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 18px rgba(37, 211, 102, 0.42);
+      }
+      .btn-lb-enquiry:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 22px rgba(37, 211, 102, 0.55);
+      }
+      .btn-lb-enquiry ion-icon {
+        font-size: 19px;
+      }
+
+      @media (max-width: 370px) {
+        .btn-lb-action {
+          font-size: 12px;
+          padding: 0 8px;
+          gap: 4px;
+        }
+        .btn-lb-action ion-icon {
+          font-size: 16px;
+        }
       }
 
       .lightbox-mowanchery-code {
@@ -8350,49 +8453,29 @@
           <button
             type="button"
             id="btnLightboxFooterDownload"
-            class="btn-wa-order"
-            title="Download Photo"
-            style="
-              background: #1f2937;
-              cursor: pointer;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-              padding: 0 16px;
-            "
+            class="btn-lb-action btn-lb-download"
+            title="Download Photo to Device"
           >
-            <ion-icon
-              name="download-outline"
-              style="font-size: 18px; margin-right: 4px; color: #ffffff"
-            ></ion-icon>
+            <ion-icon name="download-outline"></ion-icon>
             <span>Download</span>
           </button>
           <button
             type="button"
             id="btnLightboxBuyNow"
-            class="btn-wa-order"
-            style="background: var(--primary); cursor: pointer"
+            class="btn-lb-action btn-lb-buy"
+            title="Order this Cake"
           >
-            <ion-icon
-              name="bag-handle"
-              style="font-size: 18px; margin-right: 4px; color: #ffffff"
-            ></ion-icon>
-            <span>Buy / Order Now</span>
+            <ion-icon name="bag-handle"></ion-icon>
+            <span>Order Now</span>
           </button>
           <button
             type="button"
             id="btnLightboxEnquiry"
-            class="btn-wa-order"
+            class="btn-lb-action btn-lb-enquiry"
             title="Enquire on WhatsApp"
-            style="
-              background: var(--whatsapp);
-              cursor: pointer;
-              box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
-            "
           >
-            <ion-icon
-              name="logo-whatsapp"
-              style="font-size: 18px; margin-right: 4px; color: #ffffff"
-            ></ion-icon>
-            <span>Enquiry</span>
+            <ion-icon name="logo-whatsapp"></ion-icon>
+            <span>WhatsApp</span>
           </button>
         </div>
       </div>
@@ -9039,7 +9122,7 @@
                 <div style="margin-top: 5px; font-size: 11px; color: #be123c; line-height: 1.4;">
                   • <strong>Rush Delivery (+₹400):</strong> Ordered after 3:00 PM today for delivery today or tomorrow before 3:30 PM.
                   <br />
-                  • <strong>Standard Delivery (+₹250):</strong> Tommorow 3.30 kk shesham only ₹250 mathram (Tomorrow after 3:30 PM or future dates).
+                  • <strong>Standard Delivery (+₹250):</strong> Tomorrow after 3:30 PM or future dates (Only ₹250 standard charge).
                 </div>
               </div>
 
@@ -11880,7 +11963,7 @@
           "
         >
           💡 <strong>Notice (Cut-off 3:00 PM):</strong><br />
-          Tommorow 3.30 kk shesham only <strong>₹250</strong> mathram! (നാളെ ഉച്ചക്ക് 3:30 PM-ന് ശേഷമോ തുടർന്നുള്ള ദിവസങ്ങളിലോ ഡെലിവറി തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ ഫോട്ടോ കേക്ക് ചാർജ്ജ് <strong>₹250</strong> മാത്രമാണ്).
+          Standard charge is only <strong>₹250</strong> for delivery scheduled tomorrow after <strong>3:30 PM</strong> or on future dates.
         </div>
         <button
           type="button"
@@ -13094,7 +13177,7 @@
           charge,
           reason,
           notice: isRush
-            ? "⚠️ Rush Photo Cake (+₹400): Ordered after 3 PM for today / tomorrow before 3:30 PM. (Tommorow 3.30 kk shesham only ₹250 mathram)"
+            ? "⚠️ Rush Photo Cake (+₹400): Ordered after 3 PM for today / tomorrow before 3:30 PM. (Tomorrow after 3:30 PM is only ₹250)"
             : "📸 Standard Photo Cake (+₹250): Tomorrow after 3:30 PM or future date."
         };
       }
@@ -13109,7 +13192,7 @@
         }
         const tip = document.getElementById("photoCakeRushModalTip");
         if (tip) {
-          tip.innerHTML = `💡 <strong>Notice (Cut-off 3:00 PM):</strong><br />Tommorow 3.30 kk shesham only <strong>₹250</strong> mathram! (നാളെ ഉച്ചക്ക് 3:30 PM-ന് ശേഷമോ തുടർന്നുള്ള ദിവസങ്ങളിലോ ഡെലിവറി തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ ഫോട്ടോ കേക്ക് ചാർജ്ജ് <strong>₹250</strong> മാത്രമാണ്).`;
+          tip.innerHTML = `💡 <strong>Notice (Cut-off 3:00 PM):</strong><br />Standard charge is only <strong>₹250</strong> for delivery scheduled tomorrow after <strong>3:30 PM</strong> or on future dates.`;
         }
         if (modal) modal.style.display = "flex";
       }
@@ -16596,7 +16679,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=13').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=14').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -18667,7 +18750,7 @@
             const photoP = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
             msg += `• *Edible Photo Cake Print:* +₹${photoP.charge} ${photoP.isRush ? '(⚡ Express Rush: Ordered after 3 PM today / before 3:30 PM tomorrow)' : '(Standard)'}\n`;
             if (photoP.isRush) {
-              msg += `  _(Tommorow 3.30 kk shesham only ₹250 mathram)_\n`;
+              msg += `  _(Standard delivery tomorrow after 3:30 PM or future dates is only ₹250)_\n`;
             }
           }
           if (!isCake && Number(priceInfo.designCharge) > 0) {
