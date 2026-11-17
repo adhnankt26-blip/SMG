@@ -1455,6 +1455,52 @@
         pointer-events: none;
         box-shadow: none !important;
       }
+      .btn-card-download {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(17, 24, 39, 0.78);
+        backdrop-filter: blur(6px);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 6;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transition: transform 0.15s ease, background 0.15s ease;
+      }
+      .btn-card-download:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+      }
+      .btn-card-download:active {
+        transform: scale(0.92);
+      }
+      .lightbox-header-btn {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+      .lightbox-header-btn:hover {
+        background: rgba(255, 255, 255, 0.32);
+        transform: scale(1.04);
+      }
       .cake-card-btn-row {
         display: flex;
         gap: 6px;
@@ -8267,9 +8313,20 @@
     <div class="lightbox" id="lightboxModal">
       <div class="lightbox-header">
         <div class="lightbox-counter" id="lightboxIndexCount">1 / 1</div>
-        <button class="lightbox-close-btn" id="btnCloseLightbox">
-          <ion-icon name="close"></ion-icon>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button
+            type="button"
+            class="lightbox-header-btn"
+            id="btnLightboxDownload"
+            title="Download Photo to Device"
+          >
+            <ion-icon name="download-outline" style="font-size: 16px;"></ion-icon>
+            <span>Download</span>
+          </button>
+          <button class="lightbox-close-btn" id="btnCloseLightbox">
+            <ion-icon name="close"></ion-icon>
+          </button>
+        </div>
       </div>
 
       <div class="lightbox-body" id="lightboxTouchArea">
@@ -8290,6 +8347,24 @@
         ></div>
         <div class="lightbox-cat-badge" id="lightboxCatBadge">Category</div>
         <div class="lightbox-actions">
+          <button
+            type="button"
+            id="btnLightboxFooterDownload"
+            class="btn-wa-order"
+            title="Download Photo"
+            style="
+              background: #1f2937;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+              padding: 0 16px;
+            "
+          >
+            <ion-icon
+              name="download-outline"
+              style="font-size: 18px; margin-right: 4px; color: #ffffff"
+            ></ion-icon>
+            <span>Download</span>
+          </button>
           <button
             type="button"
             id="btnLightboxBuyNow"
@@ -8349,22 +8424,45 @@
               </p>
             </div>
           </div>
-          <button
-            class="lightbox-close-btn"
-            id="btnCloseBuyNow"
-            style="
-              background: #f3f4f6;
-              color: #111827;
-              width: 32px;
-              height: 32px;
-              font-size: 14px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <ion-icon name="close"></ion-icon>
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button
+              type="button"
+              id="btnBuyNowDownload"
+              title="Download Cake Photo"
+              style="
+                background: #f3f4f6;
+                color: #111827;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 16px;
+                transition: background 0.15s ease;
+              "
+            >
+              <ion-icon name="download-outline"></ion-icon>
+            </button>
+            <button
+              class="lightbox-close-btn"
+              id="btnCloseBuyNow"
+              style="
+                background: #f3f4f6;
+                color: #111827;
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </div>
         </div>
         <!-- Stock Out Warning Banner (Full-Width, 2-3 Lines) -->
         <div
@@ -14919,7 +15017,10 @@
           card.innerHTML = `
             <div class="cake-card-img-wrap">
               ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-              ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+              ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+              <button type="button" class="btn-card-download" title="Download Photo">
+                <ion-icon name="download-outline"></ion-icon>
+              </button>
               <span class="cake-card-badge">${catIcon} ${catName}</span>
               <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
             </div>
@@ -14958,6 +15059,14 @@
             .querySelector(".cake-card-img-wrap")
             .addEventListener("click", () => {
               openLightbox(filtered, index);
+            });
+
+          // Download tap
+          card
+            .querySelector(".btn-card-download")
+            ?.addEventListener("click", (e) => {
+              e.stopPropagation();
+              downloadCakeImage(cake.uri, cakeName);
             });
 
           // Order Now tap opens Buy Now Modal
@@ -15161,12 +15270,20 @@
           card.className = "photo-item-card";
           card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
+          <button type="button" class="btn-card-download" title="Download Photo">
+            <ion-icon name="download-outline"></ion-icon>
+          </button>
           <img src="${photo.uri}" alt="${catName}" loading="lazy">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${catIcon}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${catName}</span>
           </div>
         `;
+
+          card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            downloadCakeImage(photo.uri, catName);
+          });
 
           card.addEventListener("click", () => {
             openLightbox(photosToDisplay, index);
@@ -15198,13 +15315,21 @@
           card.className = "photo-item-card";
           card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          <button type="button" class="btn-card-download" title="Download Photo">
+            <ion-icon name="download-outline"></ion-icon>
+          </button>
           <img src="${photo.uri}" alt="${cat.name}" loading="lazy" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
           </div>
         `;
+
+          card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            downloadCakeImage(photo.uri, cat.name);
+          });
 
           card.addEventListener("click", () => {
             openLightbox(catPhotos, index);
@@ -15215,6 +15340,119 @@
       }
 
       // 8. Lightbox Preview Modal (image-lightbox.tsx replica)
+      // Universal Cross-Device Photo Download
+      async function downloadCakeImage(imageUrl, imageName) {
+        if (!imageUrl) {
+          showToast("No image URL available to download! ⚠️");
+          return;
+        }
+        try {
+          showToast("Downloading photo... ⏳");
+          const cleanName = (imageName || "cake-studio-design")
+            .replace(/[^a-zA-Z0-9_-]/g, "_")
+            .toLowerCase();
+          const filename = `${cleanName}-${Date.now()}.jpg`;
+
+          // If Data URL (base64)
+          if (imageUrl.startsWith("data:")) {
+            const res = await fetch(imageUrl);
+            const blob = await res.blob();
+            triggerBlobDownload(blob, filename);
+            showToast("Photo saved to your device! 📥");
+            return;
+          }
+
+          // Try direct Blob fetch
+          try {
+            const response = await fetch(imageUrl, { mode: "cors" });
+            if (response.ok) {
+              const blob = await response.blob();
+              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+              const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+              if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                  await navigator.share({
+                    files: [file],
+                    title: imageName || "Cake Studio",
+                    text: "Download Cake Studio Photo"
+                  });
+                  showToast("Photo saved to device! 📸");
+                  return;
+                } catch (shareErr) {
+                  if (shareErr.name === "AbortError") return;
+                }
+              }
+              triggerBlobDownload(blob, filename);
+              showToast("Photo downloaded successfully! 📥");
+              return;
+            }
+          } catch(eFetch) {
+            console.warn("Direct blob fetch failed, falling back:", eFetch);
+          }
+
+          // Canvas fallback
+          try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = function() {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth || img.width;
+              canvas.height = img.naturalHeight || img.height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0);
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  triggerBlobDownload(blob, filename);
+                  showToast("Photo downloaded successfully! 📥");
+                } else {
+                  directAnchorDownload(imageUrl, filename);
+                }
+              }, "image/jpeg", 0.95);
+            };
+            img.onerror = function() {
+              directAnchorDownload(imageUrl, filename);
+            };
+            img.src = imageUrl;
+            return;
+          } catch(eCanvas) {
+            directAnchorDownload(imageUrl, filename);
+          }
+        } catch(err) {
+          console.error("Download error:", err);
+          directAnchorDownload(imageUrl, "cake-photo.jpg");
+        }
+      }
+
+      function triggerBlobDownload(blob, filename) {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          try {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          } catch(e) {}
+        }, 1200);
+      }
+
+      function directAnchorDownload(url, filename) {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          try { document.body.removeChild(a); } catch(e) {}
+        }, 800);
+        showToast("Opening photo to save... 📥");
+      }
+
       function openLightbox(list, index) {
         lightboxList = list;
         currentLightboxIndex = index;
@@ -15275,6 +15513,34 @@
       document
         .getElementById("btnCloseLightbox")
         .addEventListener("click", closeLightbox);
+
+      document
+        .getElementById("btnLightboxDownload")
+        ?.addEventListener("click", () => {
+          if (!lightboxList.length) return;
+          const photo = lightboxList[currentLightboxIndex];
+          const cat = categories.find((c) => c.id === photo.categoryId);
+          const name = photo.name || photo.title || (cat ? cat.name : "Cake Design");
+          downloadCakeImage(photo.uri, name);
+        });
+
+      document
+        .getElementById("btnLightboxFooterDownload")
+        ?.addEventListener("click", () => {
+          if (!lightboxList.length) return;
+          const photo = lightboxList[currentLightboxIndex];
+          const cat = categories.find((c) => c.id === photo.categoryId);
+          const name = photo.name || photo.title || (cat ? cat.name : "Cake Design");
+          downloadCakeImage(photo.uri, name);
+        });
+
+      document
+        .getElementById("btnBuyNowDownload")
+        ?.addEventListener("click", () => {
+          if (!buyNowTargetPhoto) return;
+          const name = buyNowTargetPhoto.name || buyNowTargetPhoto.title || "Cake Design";
+          downloadCakeImage(buyNowTargetPhoto.uri, name);
+        });
       document
         .getElementById("btnLightboxBuyNow")
         .addEventListener("click", () => {
@@ -16330,7 +16596,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=12').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=13').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
