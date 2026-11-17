@@ -8426,8 +8426,8 @@
             <ion-icon name="download-outline" style="font-size: 16px;"></ion-icon>
             <span>Download</span>
           </button>
-          <button class="lightbox-close-btn" id="btnCloseLightbox">
-            <ion-icon name="close"></ion-icon>
+          <button class="lightbox-close-btn" id="btnCloseLightbox" aria-label="Close Lightbox" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 50%; cursor: pointer; touch-action: manipulation; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <ion-icon name="close" style="pointer-events: none; font-size: 24px;"></ion-icon>
           </button>
         </div>
       </div>
@@ -8535,15 +8535,15 @@
               style="
                 background: #f3f4f6;
                 color: #111827;
-                width: 32px;
-                height: 32px;
+                width: 38px; min-width: 38px; min-height: 38px; touch-action: manipulation; flex-shrink: 0;
+                height: 38px;
                 font-size: 14px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
               "
             >
-              <ion-icon name="close"></ion-icon>
+              <ion-icon name="close" style="pointer-events: none; font-size: 20px;"></ion-icon>
             </button>
           </div>
         </div>
@@ -9816,12 +9816,12 @@
             style="
               background: #f3f4f6;
               color: #111827;
-              width: 32px;
-              height: 32px;
+              width: 38px; min-width: 38px; min-height: 38px; touch-action: manipulation; flex-shrink: 0;
+              height: 38px;
               font-size: 14px;
             "
           >
-            <ion-icon name="close"></ion-icon>
+            <ion-icon name="close" style="pointer-events: none; font-size: 20px;"></ion-icon>
           </button>
         </div>
 
@@ -9918,12 +9918,12 @@
             style="
               background: #f3f4f6;
               color: #111827;
-              width: 32px;
-              height: 32px;
+              width: 38px; min-width: 38px; min-height: 38px; touch-action: manipulation; flex-shrink: 0;
+              height: 38px;
               font-size: 14px;
             "
           >
-            <ion-icon name="close"></ion-icon>
+            <ion-icon name="close" style="pointer-events: none; font-size: 20px;"></ion-icon>
           </button>
         </div>
 
@@ -10118,12 +10118,12 @@
             style="
               background: #f3f4f6;
               color: #111827;
-              width: 32px;
-              height: 32px;
+              width: 38px; min-width: 38px; min-height: 38px; touch-action: manipulation; flex-shrink: 0;
+              height: 38px;
               font-size: 14px;
             "
           >
-            <ion-icon name="close"></ion-icon>
+            <ion-icon name="close" style="pointer-events: none; font-size: 20px;"></ion-icon>
           </button>
         </div>
 
@@ -11857,8 +11857,8 @@
             style="
               background: #f1f5f9;
               border: none;
-              width: 34px;
-              height: 34px;
+              width: 38px; min-width: 38px; min-height: 38px; touch-action: manipulation; flex-shrink: 0;
+              height: 38px;
               border-radius: 50%;
               display: flex;
               align-items: center;
@@ -11869,7 +11869,7 @@
               transition: all 0.2s;
             "
           >
-            <ion-icon name="close-outline"></ion-icon>
+            <ion-icon name="close-outline" style="pointer-events: none; font-size: 22px;"></ion-icon>
           </button>
         </div>
 
@@ -13773,8 +13773,22 @@
 
       function closeOrderReceiptModal() {
         const modal = document.getElementById("modalOrderDetailsReceipt");
-        if (modal) modal.style.display = "none";
+        if (modal) {
+          modal.style.display = "none";
+          modal.classList.remove("active");
+        }
       }
+
+      document
+        .getElementById("btnCloseOrderReceipt")
+        ?.addEventListener("click", closeOrderReceiptModal);
+      document
+        .getElementById("modalOrderDetailsReceipt")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "modalOrderDetailsReceipt" || e.target.classList.contains("customer-rate-modal")) {
+            closeOrderReceiptModal();
+          }
+        });
 
       function openOrderReceiptModal(order) {
         if (!order) return;
@@ -15596,6 +15610,13 @@
       document
         .getElementById("btnCloseLightbox")
         .addEventListener("click", closeLightbox);
+      document
+        .getElementById("lightboxModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "lightboxModal" || e.target.id === "lightboxTouchArea") {
+            closeLightbox();
+          }
+        });
 
       document
         .getElementById("btnLightboxDownload")
@@ -16541,6 +16562,11 @@
 
         // Wire Modal Buttons
         document.getElementById("btnCloseSmartInstall")?.addEventListener("click", closeSmartInstallModal);
+        document.getElementById("modalSmartInstall")?.addEventListener("click", (e) => {
+          if (e.target.id === "modalSmartInstall" || e.target.classList.contains("modal-overlay")) {
+            closeSmartInstallModal();
+          }
+        });
         document.getElementById("btnExecuteInstall")?.addEventListener("click", triggerAppInstall);
         document.getElementById("btnDownloadDesktopShortcut")?.addEventListener("click", downloadDesktopShortcut);
 
@@ -16679,7 +16705,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=14').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=15').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17880,7 +17906,11 @@
       }
 
       function closeBuyNowModal() {
-        document.getElementById("buyNowModal").classList.remove("active");
+        const modal = document.getElementById("buyNowModal");
+        if (modal) {
+          modal.classList.remove("active");
+          modal.style.display = "";
+        }
       }
 
       function updateBuyNowPrice() {
@@ -19964,6 +19994,11 @@
       if (closeBuyNowBtn) {
         closeBuyNowBtn.addEventListener("click", closeBuyNowModal);
       }
+      document.getElementById("buyNowModal")?.addEventListener("click", (e) => {
+        if (e.target.id === "buyNowModal" || e.target.classList.contains("buy-now-modal")) {
+          closeBuyNowModal();
+        }
+      });
       initServiceTypeToggles();
       const confirmBuyNowBtn = document.getElementById("btnConfirmBuyNow");
       if (confirmBuyNowBtn) {
@@ -20154,6 +20189,13 @@
       document
         .getElementById("btnCloseFlavourSelectModal")
         ?.addEventListener("click", closeFlavourSelectModal);
+      document
+        .getElementById("flavourSelectModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "flavourSelectModal" || e.target.classList.contains("flavour-modal")) {
+            closeFlavourSelectModal();
+          }
+        });
 
       document
         .getElementById("flavourModalSearchInput")
@@ -20308,6 +20350,13 @@
       document
         .getElementById("btnClosePriceMenu")
         ?.addEventListener("click", closePriceMenuModal);
+      document
+        .getElementById("priceMenuModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "priceMenuModal" || e.target.classList.contains("price-menu-modal")) {
+            closePriceMenuModal();
+          }
+        });
 
       const menuSearchInput = document.getElementById("menuSearchInput");
       if (menuSearchInput) {
@@ -20359,6 +20408,13 @@
       document
         .getElementById("btnCloseEditMenuItem")
         ?.addEventListener("click", closeAdminEditMenuItemModal);
+      document
+        .getElementById("modalEditMenuItem")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "modalEditMenuItem" || e.target.classList.contains("admin-edit-modal")) {
+            closeAdminEditMenuItemModal();
+          }
+        });
       document
         .getElementById("btnSaveMenuItem")
         ?.addEventListener("click", handleSaveMenuItem);
@@ -20951,6 +21007,13 @@
       document
         .getElementById("btnCloseQrModal")
         ?.addEventListener("click", closeQrModal);
+      document
+        .getElementById("qrModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "qrModal" || e.target.classList.contains("qr-modal")) {
+            closeQrModal();
+          }
+        });
 
       document.getElementById("btnCopyQrLink").addEventListener("click", () => {
         navigator.clipboard.writeText(liveWebUrl);
@@ -20995,6 +21058,13 @@
       document
         .getElementById("btnCloseAdminEditCake")
         ?.addEventListener("click", closeAdminEditCakeModal);
+      document
+        .getElementById("adminEditCakeModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "adminEditCakeModal" || e.target.classList.contains("admin-edit-modal")) {
+            closeAdminEditCakeModal();
+          }
+        });
 
       document
         .getElementById("btnSaveAdminEditCake")
@@ -22060,6 +22130,13 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
       }
 
       btnClosePhotoEditor?.addEventListener("click", closePhotoEditor);
+      document
+        .getElementById("modalPhotoEditor")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "modalPhotoEditor" || e.target.classList.contains("photo-editor-modal")) {
+            closePhotoEditor();
+          }
+        });
       btnPeUploadPhoto?.addEventListener("click", () =>
         photoEditorFileInput?.click(),
       );
@@ -22242,6 +22319,85 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
         });
 
       document.getElementById("btnOpenPriceMenuFromOrders")?.addEventListener("click", openPriceMenuModal);
+
+      
+      // ========================================================
+      // Universal Escape (ESC) Key Handler for All Modals
+      // ========================================================
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" || e.key === "Esc") {
+          const locModal = document.getElementById("locationPickerModal");
+          if (locModal && locModal.classList.contains("active")) {
+            closeLocationPicker();
+            return;
+          }
+          const flavModal = document.getElementById("flavourSelectModal");
+          if (flavModal && flavModal.classList.contains("active")) {
+            closeFlavourSelectModal();
+            return;
+          }
+          const rushModal = document.getElementById("modalPhotoCakeRushAlert");
+          if (rushModal && rushModal.style.display !== "none" && rushModal.style.display !== "") {
+            closePhotoRushAlert();
+            return;
+          }
+          const rcptModal = document.getElementById("modalOrderDetailsReceipt");
+          if (rcptModal && rcptModal.style.display !== "none" && rcptModal.style.display !== "") {
+            closeOrderReceiptModal();
+            return;
+          }
+          const rateModal = document.getElementById("modalCustomerRateCake");
+          if (rateModal && rateModal.classList.contains("active")) {
+            closeCustomerRateCakeModal();
+            return;
+          }
+          const branchModal = document.getElementById("modalBranchEnquirySelect");
+          if (branchModal && branchModal.classList.contains("active")) {
+            closeBranchEnquiryModal();
+            return;
+          }
+          const instModal = document.getElementById("modalSmartInstall");
+          if (instModal && instModal.style.display !== "none" && instModal.style.display !== "") {
+            closeSmartInstallModal();
+            return;
+          }
+          const qModal = document.getElementById("qrModal");
+          if (qModal && qModal.classList.contains("active")) {
+            closeQrModal();
+            return;
+          }
+          const editMenu = document.getElementById("modalEditMenuItem");
+          if (editMenu && editMenu.classList.contains("active")) {
+            closeAdminEditMenuItemModal();
+            return;
+          }
+          const editCake = document.getElementById("adminEditCakeModal");
+          if (editCake && editCake.classList.contains("active")) {
+            closeAdminEditCakeModal();
+            return;
+          }
+          const peModal = document.getElementById("modalPhotoEditor");
+          if (peModal && peModal.classList.contains("active")) {
+            closePhotoEditor();
+            return;
+          }
+          const prModal = document.getElementById("priceMenuModal");
+          if (prModal && prModal.classList.contains("active")) {
+            closePriceMenuModal();
+            return;
+          }
+          const bModal = document.getElementById("buyNowModal");
+          if (bModal && bModal.classList.contains("active")) {
+            closeBuyNowModal();
+            return;
+          }
+          const lbModal = document.getElementById("lightboxModal");
+          if (lbModal && lbModal.classList.contains("active")) {
+            closeLightbox();
+            return;
+          }
+        }
+      });
 
       // Initialize App
       initSplashScreen();
