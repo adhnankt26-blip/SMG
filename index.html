@@ -8930,14 +8930,19 @@
               <div
                 id="buyNowPhotoCakeNotice"
                 style="
-                  font-size: 11px;
+                  font-size: 11.5px;
                   color: #9d174d;
                   font-weight: 700;
-                  line-height: 1.4;
+                  line-height: 1.5;
                   margin-bottom: 8px;
                 "
               >
-                📸 <strong>Edible Photo Cake Print:</strong> Add your favourite photo on the cake! Charge is ₹250 (Today, or tomorrow after 3:30 PM / future dates) or ₹400 for rush delivery (ordered after 3:00 PM today for delivery tomorrow before 3:30 PM).
+                📸 <strong>Edible Photo Cake Print:</strong> Add your favourite photo on the cake!
+                <div style="margin-top: 5px; font-size: 11px; color: #be123c; line-height: 1.4;">
+                  • <strong>Rush Delivery (+₹400):</strong> Ordered after 3:00 PM today for delivery today or tomorrow before 3:30 PM.
+                  <br />
+                  • <strong>Standard Delivery (+₹250):</strong> Tommorow 3.30 kk shesham only ₹250 mathram (Tomorrow after 3:30 PM or future dates).
+                </div>
               </div>
 
               <!-- Upload Photo for Cake -->
@@ -11763,6 +11768,7 @@
           Since your order is placed after <strong>3:00 PM</strong> today for same-day delivery or tomorrow before <strong>3:30 PM</strong>, express rush edible photo printing charge of <strong>₹400</strong> is added.
         </p>
         <div
+          id="photoCakeRushModalTip"
           style="
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
@@ -11775,8 +11781,8 @@
             text-align: left;
           "
         >
-          💡 <strong>Tip (Cut-off 3:00 PM):</strong><br />
-          If you schedule delivery for tomorrow after <strong>3:30 PM</strong> (or future date), photo cake charge is only <strong>₹250</strong>!
+          💡 <strong>Notice (Cut-off 3:00 PM):</strong><br />
+          Tommorow 3.30 kk shesham only <strong>₹250</strong> mathram! (നാളെ ഉച്ചക്ക് 3:30 PM-ന് ശേഷമോ തുടർന്നുള്ള ദിവസങ്ങളിലോ ഡെലിവറി തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ ഫോട്ടോ കേക്ക് ചാർജ്ജ് <strong>₹250</strong> മാത്രമാണ്).
         </div>
         <button
           type="button"
@@ -12918,7 +12924,7 @@
       // ========================================================
       let isBuyNowPhotoCakeActive = false;
       let buyNowPhotoCakeDataUrl = "";
-      let hasShownPhotoRushPopup = false;
+      let lastShownRushState = false;
 
       function getPhotoCakePricing(delivDate, delivTime, isStockOutCake = null) {
         const isStockOut = (isStockOutCake !== null)
@@ -12949,43 +12955,39 @@
           delivHour = parseInt(parts[0], 10);
           delivMin = parseInt(parts[1], 10);
         }
+        // Before 3:30 PM is hour < 15 or (hour === 15 and min < 30)
         const isDelivBefore330PM = (delivHour < 15) || (delivHour === 15 && delivMin < 30);
 
         let isRush = false;
         let reason = "";
 
         // Pricing Rules:
-        // Rule 1: Stock-out cake wanted TODAY itself
-        // "innu thanne stock out photo cake ulla cake venam ennu paranjal extra cherge 400 aavnam"
-        if (isStockOut && delivDate && delivDate <= todayStr) {
-          isRush = true;
-          reason = "Urgent same-day preparation for Out-of-Stock cake with edible photo cake print (+₹400). Tomorrow delivery is standard ₹250.";
-        }
-        // Rule 2: Tomorrow delivery (whether stock-out or in-stock)
-        // "if tomorroow aanu photo cake engil currnt condition 'out of stock' anenkil allenkilum photo cake annenkil 250 rupees add aavanm"
-        else if (delivDate === tomorrowStr) {
-          if (!isStockOut && isAfter3PMToday && isDelivBefore330PM) {
+        // Rule: If order is placed today AFTER 3:00 PM:
+        //   - Wants it today (inn thanne venam): Rush +₹400
+        //   - Wants it tomorrow before 3:30 PM (nale 3:30 PM munp venam): Rush +₹400
+        //   - Wants it tomorrow after 3:30 PM: Standard +₹250 (Tommorow 3.30 kk shesham only 250)
+        //   - Wants it on future date: Standard +₹250
+        if (isAfter3PMToday) {
+          if (!delivDate || delivDate <= todayStr) {
+            isRush = true;
+            reason = "Order placed after 3:00 PM today for same-day delivery requires express rush photo printing (+₹400). Tomorrow after 3:30 PM is only ₹250.";
+          } else if (delivDate === tomorrowStr && isDelivBefore330PM) {
             isRush = true;
             reason = "Order placed after 3:00 PM today for delivery tomorrow before 3:30 PM requires express rush photo printing (+₹400). Tomorrow after 3:30 PM is only ₹250.";
           } else {
             isRush = false;
             reason = "";
           }
-        }
-        // Rule 3: In-stock cake for today
-        else if (delivDate && delivDate <= todayStr) {
-          if (isAfter3PMToday) {
+        } else {
+          // If order placed BEFORE 3:00 PM today:
+          // Stock-out cake wanted today itself:
+          if (isStockOut && delivDate && delivDate <= todayStr) {
             isRush = true;
-            reason = "Order placed after 3:00 PM today for same-day delivery requires express rush photo printing (+₹400).";
+            reason = "Urgent same-day preparation for Out-of-Stock cake with edible photo cake print (+₹400). Tomorrow after 3:30 PM is only ₹250.";
           } else {
             isRush = false;
             reason = "";
           }
-        }
-        // Rule 4: Future dates
-        else {
-          isRush = false;
-          reason = "";
         }
 
         const charge = isRush ? 400 : 250;
@@ -12994,16 +12996,22 @@
           charge,
           reason,
           notice: isRush
-            ? "⚠️ Rush Photo Cake (+₹400): Same-day out-of-stock rush / urgent order. (Tomorrow delivery is standard ₹250)"
-            : "📸 Standard Photo Cake (+₹250): Available tomorrow or future dates."
+            ? "⚠️ Rush Photo Cake (+₹400): Ordered after 3 PM for today / tomorrow before 3:30 PM. (Tommorow 3.30 kk shesham only ₹250 mathram)"
+            : "📸 Standard Photo Cake (+₹250): Tomorrow after 3:30 PM or future date."
         };
       }
 
       function showPhotoRushAlert(pricing) {
         const modal = document.getElementById("modalPhotoCakeRushAlert");
         const txt = document.getElementById("photoCakeRushModalText");
-        if (txt && pricing.reason) {
-          txt.innerHTML = `${pricing.reason}<br><br>An express rush edible photo printing charge of <strong>₹400</strong> is applied.`;
+        if (txt) {
+          txt.innerHTML = (pricing && pricing.reason)
+            ? `${pricing.reason}<br><br>Express rush edible photo printing charge of <strong>₹400</strong> is added.`
+            : `Order placed after <strong>3:00 PM</strong> today for same-day delivery or tomorrow before <strong>3:30 PM</strong> requires express rush edible photo printing (+<strong>₹400</strong>).`;
+        }
+        const tip = document.getElementById("photoCakeRushModalTip");
+        if (tip) {
+          tip.innerHTML = `💡 <strong>Notice (Cut-off 3:00 PM):</strong><br />Tommorow 3.30 kk shesham only <strong>₹250</strong> mathram! (നാളെ ഉച്ചക്ക് 3:30 PM-ന് ശേഷമോ തുടർന്നുള്ള ദിവസങ്ങളിലോ ഡെലിവറി തിരഞ്ഞെടുക്കുകയാണെങ്കിൽ ഫോട്ടോ കേക്ക് ചാർജ്ജ് <strong>₹250</strong> മാത്രമാണ്).`;
         }
         if (modal) modal.style.display = "flex";
       }
@@ -13465,11 +13473,13 @@
 
           const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
           const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-          const pricing = getPhotoCakePricing(custDate, custTime);
+          const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
 
-          if (pricing.isRush && !hasShownPhotoRushPopup) {
-            hasShownPhotoRushPopup = true;
+          if (pricing.isRush && !lastShownRushState) {
+            lastShownRushState = true;
             showPhotoRushAlert(pricing);
+          } else if (!pricing.isRush) {
+            lastShownRushState = false;
           }
           updateBuyNowPrice();
         });
@@ -13479,22 +13489,27 @@
           if (isBuyNowPhotoCakeActive) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-            const pricing = getPhotoCakePricing(custDate, custTime);
-            if (pricing.isRush && !hasShownPhotoRushPopup) {
-              hasShownPhotoRushPopup = true;
+            const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            if (pricing.isRush && !lastShownRushState) {
+              lastShownRushState = true;
               showPhotoRushAlert(pricing);
+            } else if (!pricing.isRush) {
+              lastShownRushState = false;
             }
           }
           updateBuyNowPrice();
         });
+
         document.getElementById("buyNowDeliveryTime")?.addEventListener("change", () => {
           if (isBuyNowPhotoCakeActive) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-            const pricing = getPhotoCakePricing(custDate, custTime);
-            if (pricing.isRush && !hasShownPhotoRushPopup) {
-              hasShownPhotoRushPopup = true;
+            const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            if (pricing.isRush && !lastShownRushState) {
+              lastShownRushState = true;
               showPhotoRushAlert(pricing);
+            } else if (!pricing.isRush) {
+              lastShownRushState = false;
             }
           }
           updateBuyNowPrice();
@@ -16315,7 +16330,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=11').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=12').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17326,7 +17341,7 @@
         buyNowTargetPhoto = photo;
         // Reset Photo Cake style selection
         isBuyNowPhotoCakeActive = false;
-        hasShownPhotoRushPopup = false;
+        lastShownRushState = false;
         buyNowPhotoCakeDataUrl = "";
         document.getElementById("btnBuyNowStyleRegular")?.classList.add("active");
         document.getElementById("btnBuyNowStylePhoto")?.classList.remove("active");
@@ -18380,14 +18395,19 @@
             }
           }
           msg += `──────────────────────────\n`;
-          msg += `💰 *Price:*\n`;
-          if (isCake || Number(priceInfo.designCharge) === 0) {
-            msg += `• *Total Price:* ₹${priceInfo.totalPrice}\n`;
-          } else {
-            msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
-            msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
-            msg += `• *Estimated Total:* ₹${priceInfo.totalPrice}\n`;
+          msg += `💰 *Price Breakdown:*\n`;
+          msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
+          if (isCake && isBuyNowPhotoCakeActive) {
+            const photoP = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            msg += `• *Edible Photo Cake Print:* +₹${photoP.charge} ${photoP.isRush ? '(⚡ Express Rush: Ordered after 3 PM today / before 3:30 PM tomorrow)' : '(Standard)'}\n`;
+            if (photoP.isRush) {
+              msg += `  _(Tommorow 3.30 kk shesham only ₹250 mathram)_\n`;
+            }
           }
+          if (!isCake && Number(priceInfo.designCharge) > 0) {
+            msg += `• *Design Charge:* ₹${priceInfo.designCharge}\n`;
+          }
+          msg += `• *Total Amount:* ₹${priceInfo.totalPrice}\n`;
           if (cakeMsg) {
             msg += `──────────────────────────\n`;
             msg += `✍️ *Text on Cake:* "${cakeMsg}"\n`;
