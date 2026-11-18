@@ -3444,12 +3444,28 @@
          2-SECOND WELCOME & LOADING SCREEN (QR SCAN & APP ENTRY)
          ======================================================== */
       .app-splash-screen {
-        display: none !important;
         position: fixed;
         inset: 0;
-        z-index: -9999;
-        opacity: 0;
-        pointer-events: none;
+        z-index: 99999;
+        background: radial-gradient(
+          circle at 50% 35%,
+          #ffffff 0%,
+          #fff7ed 55%,
+          #fed7aa 120%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+        opacity: 1;
+        transform: scale(1);
+        transition:
+          opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+          transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        -webkit-user-select: none;
+        overflow: hidden;
       }
 
       .app-splash-screen.fade-out {
@@ -4814,17 +4830,18 @@
     <!-- ========================================================
        CAKE STUDIO 2-SECOND WELCOME & LOADING SCREEN (QR SCAN & APP ENTRY)
        ======================================================== -->
-    <div id="appSplashScreen" class="app-splash-screen" style="display: none !important;">
+    <div id="appSplashScreen" class="app-splash-screen">
       <div class="splash-content-container">
         <!-- Floating Bakery Sparkles -->
         <div class="splash-sparkle sp-1">✨</div>
         <div class="splash-sparkle sp-2">🎂</div>
         <div class="splash-sparkle sp-3">✨</div>
 
-        <!-- Center Artwork Badge with User's Uploaded Cake Studio Image -->
+        <!-- Center Artwork Badge with Cake Studio Image -->
         <div class="splash-logo-card">
           <img
             src="splash.jpg"
+            onerror="this.onerror=null; this.src='icon.png';"
             alt="Cake Studio"
             class="splash-logo-img"
             id="splashLogoImg"
@@ -4840,7 +4857,7 @@
         <!-- 2-Second Loading Progress Bar -->
         <div class="splash-loading-wrapper">
           <div class="splash-progress-track">
-            <div class="splash-progress-bar" id="splashProgressBar"></div>
+            <div class="splash-progress-bar splash-progress-animate" id="splashProgressBar"></div>
           </div>
           <div class="splash-loading-status" id="splashStatusText">
             <ion-icon name="sparkles" class="splash-spin-sparkle"></ion-icon>
@@ -4855,6 +4872,17 @@
         </div>
       </div>
     </div>
+    <script>
+      (function() {
+        var sp = document.getElementById("appSplashScreen");
+        if (sp) {
+          setTimeout(function() {
+            sp.classList.add("fade-out");
+            setTimeout(function() { sp.classList.add("hidden"); }, 550);
+          }, 2100);
+        }
+      })();
+    </script>
 
     <div id="app">
       <!-- Permanent Smart Install Bar at Top (Cannot be closed) -->
@@ -16872,7 +16900,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=18').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=19').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -22664,10 +22692,27 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
 
       function initSplashScreen() {
         const splashEl = document.getElementById("appSplashScreen");
-        if (splashEl) {
-          splashEl.style.display = "none";
-          splashEl.classList.add("hidden");
+        const barEl = document.getElementById("splashProgressBar");
+        if (!splashEl) return;
+
+        if (splashTimer) clearTimeout(splashTimer);
+        if (splashHideTimer) clearTimeout(splashHideTimer);
+
+        splashEl.classList.remove("hidden", "fade-out");
+
+        if (barEl) {
+          barEl.classList.remove("splash-progress-animate");
+          void barEl.offsetWidth; // Force reflow to restart CSS animation cleanly
+          barEl.classList.add("splash-progress-animate");
         }
+
+        // Smooth 2 seconds loading duration as requested
+        splashTimer = setTimeout(() => {
+          splashEl.classList.add("fade-out");
+          splashHideTimer = setTimeout(() => {
+            splashEl.classList.add("hidden");
+          }, 550);
+        }, 2000);
       }
 
       window.previewSplashScreen = function () {
