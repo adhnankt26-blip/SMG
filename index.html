@@ -5278,6 +5278,17 @@
           <div class="header-actions-row">
             <button
               class="btn-round"
+              id="btnDownloadDirectCake"
+              title="Download Cake Photo to Device"
+              aria-label="Download Cake Photo to Device"
+            >
+              <ion-icon
+                name="download-outline"
+                style="font-size: 18px; pointer-events: none;"
+              ></ion-icon>
+            </button>
+            <button
+              class="btn-round"
               id="btnShareDirectCake"
               title="Share Cake Link"
             >
@@ -5292,7 +5303,17 @@
         <div style="padding: 14px">
           <!-- Single Cake Showcase Card -->
           <div class="direct-cake-card">
-            <div class="direct-cake-image-wrap">
+            <div class="direct-cake-image-wrap" style="position: relative;">
+              <button
+                type="button"
+                class="btn-card-download"
+                id="btnDownloadDirectCakeImage"
+                title="Download Photo to Device"
+                aria-label="Download Photo to Device"
+                style="top: 12px; right: 12px; width: 40px; height: 40px; font-size: 18px;"
+              >
+                <ion-icon name="download-outline" style="pointer-events: none;"></ion-icon>
+              </button>
               <img id="directCakeImage" src="" alt="Cake Design" />
             </div>
 
@@ -5350,6 +5371,20 @@
                       font-weight: 700;
                     "
                     >Category</span
+                  >
+                  <span
+                    id="directCakeFondantBadge"
+                    style="
+                      display: none;
+                      background: #fdf2f8;
+                      color: #be123c;
+                      border: 1px solid #fbcfe8;
+                      padding: 3px 8px;
+                      border-radius: 8px;
+                      font-size: 11px;
+                      font-weight: 800;
+                    "
+                    >✨ Full Fondant (₹1400/Kg)</span
                   >
                   <span
                     id="directCakeMowancheryBadge"
@@ -8597,6 +8632,19 @@
                   Category
                 </div>
                 <span
+                  id="buyNowFondantBadge"
+                  style="
+                    display: none;
+                    font-size: 10.5px;
+                    font-weight: 800;
+                    color: #be123c;
+                    background: #fdf2f8;
+                    border: 1px solid #fbcfe8;
+                    padding: 2px 7px;
+                    border-radius: 6px;
+                  "
+                >✨ Full Fondant (₹1400/Kg)</span>
+                <span
                   id="buyNowMowancheryCode"
                   style="
                     font-size: 11px;
@@ -10793,8 +10841,94 @@
 
         <!-- Rates for Category Photos (Design Charge & Min Order Qty) -->
         <div id="adminEditCategoryRatesRow" style="margin-bottom: 14px;">
-          <!-- 2. Design Charge (₹) -->
-          <div style="margin-bottom: 12px">
+          <!-- Pricing Mode Selector (Standard vs Full Fondant / Custom Rate Per Kg) -->
+          <div style="background: #fdf2f8; border: 1.5px solid #fbcfe8; border-radius: 14px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <label style="font-size: 11.5px; font-weight: 800; color: #9d174d; display: flex; align-items: center; gap: 5px;">
+                <ion-icon name="pricetag-outline" style="font-size: 15px; color: var(--primary);"></ion-icon>
+                <span>Pricing Mode</span>
+              </label>
+              <span id="adminEditPriceModeBadge" style="font-size: 9.5px; font-weight: 800; background: #fff; color: var(--primary); padding: 2px 7px; border-radius: 8px; border: 1px solid #f472b6;">Flavour + Design Charge</span>
+            </div>
+
+            <!-- Mode Switcher Buttons -->
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <button
+                type="button"
+                id="btnAdminModeStandard" onclick="setAdminPricingMode('standard')"
+                style="flex: 1; padding: 8px 6px; font-size: 11px; font-weight: 700; border-radius: 10px; border: 2px solid var(--primary); background: #fff1f2; color: #be123c; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;"
+              >
+                <ion-icon name="cafe-outline" style="font-size: 14px; pointer-events: none;"></ion-icon>
+                Standard Flavour Rate
+              </button>
+              <button
+                type="button"
+                id="btnAdminModeFondant" onclick="setAdminPricingMode('fondant', 1400, 'Full Fondant Cake')"
+                style="flex: 1; padding: 8px 6px; font-size: 11px; font-weight: 700; border-radius: 10px; border: 1.5px solid #e5e7eb; background: #ffffff; color: #374151; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s;"
+              >
+                <ion-icon name="sparkles" style="font-size: 14px; color: #db2777; pointer-events: none;"></ion-icon>
+                Full Fondant (₹1400/kg)
+              </button>
+            </div>
+
+            <!-- Full Fondant / Custom Rate Options Box -->
+            <div id="adminEditFondantOptionsBox" style="display: none; background: #ffffff; border: 1.5px solid #fbcfe8; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(190, 18, 60, 0.05);">
+              <div style="margin-bottom: 10px;">
+                <label style="font-size: 11px; font-weight: 800; color: #374151; display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <span>Rate Per Kilogram (₹ / Kg):</span>
+                  <span style="font-size: 10px; color: #059669; font-weight: 800;">e.g. 3 Kg = ₹4,200</span>
+                </label>
+                <input
+                  type="number"
+                  id="adminEditPricePerKgInput"
+                  class="admin-text-input"
+                  placeholder="1400"
+                  value="1400"
+                  min="100"
+                  step="50"
+                  style="margin-bottom: 6px; font-size: 15px; font-weight: 800; color: #be123c;"
+                />
+                <!-- Preset Chips -->
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <button type="button" class="btn-time-preset" onclick="setAdminPricePerKg(1400, 'Full Fondant Cake')" style="background: #fdf2f8; border: 1.5px solid #f472b6; color: #be123c; border-radius: 8px; font-size: 11px; font-weight: 800; padding: 4px 8px; cursor: pointer;">
+                    ⭐ ₹1400/Kg (Full Fondant)
+                  </button>
+                  <button type="button" class="btn-time-preset" onclick="setAdminPricePerKg(1200, 'Semi Fondant Cake')" style="background: #f9fafb; border: 1px solid #d1d5db; color: #374151; border-radius: 8px; font-size: 11px; font-weight: 700; padding: 4px 8px; cursor: pointer;">
+                    ₹1200/Kg (Semi Fondant)
+                  </button>
+                  <button type="button" class="btn-time-preset" onclick="setAdminPricePerKg(1500, 'Full Fondant Premium')" style="background: #f9fafb; border: 1px solid #d1d5db; color: #374151; border-radius: 8px; font-size: 11px; font-weight: 700; padding: 4px 8px; cursor: pointer;">
+                    ₹1500/Kg
+                  </button>
+                  <button type="button" class="btn-time-preset" onclick="setAdminPricePerKg(1600, 'Full Fondant Luxury')" style="background: #f9fafb; border: 1px solid #d1d5db; color: #374151; border-radius: 8px; font-size: 11px; font-weight: 700; padding: 4px 8px; cursor: pointer;">
+                    ₹1600/Kg
+                  </button>
+                </div>
+              </div>
+
+              <!-- Cake Type Title Input -->
+              <div style="margin-bottom: 8px;">
+                <label style="font-size: 10.5px; font-weight: 700; color: #6b7280; display: block; margin-bottom: 2px;">
+                  Cake Type Title (shown to customer):
+                </label>
+                <input
+                  type="text"
+                  id="adminEditCakeTypeInput"
+                  class="admin-text-input"
+                  placeholder="Full Fondant Cake"
+                  value="Full Fondant Cake"
+                  style="margin-bottom: 0; font-size: 12px; font-weight: 700;"
+                />
+              </div>
+
+              <!-- Live Math Preview -->
+              <div id="adminEditPriceLivePreview" style="font-size: 11px; color: #be123c; font-weight: 700; background: #fff1f2; padding: 7px 10px; border-radius: 8px; border: 1px dashed #fecdd3;">
+                Live Preview: 1 Kg = ₹1400 | 2 Kg = ₹2800 | 3 Kg = ₹4200 | 4 Kg = ₹5600
+              </div>
+            </div>
+          </div>
+
+          <!-- Standard Design Charge Box (hidden if Fondant mode active) -->
+          <div id="adminEditStandardDcBox" style="margin-bottom: 12px">
             <label
               class="box-label"
               style="color: #374151; display: flex; align-items: center; gap: 4px"
@@ -12844,7 +12978,7 @@
         return isNaN(val) ? 1 : val;
       }
 
-      function calculateCakePrice(flavourName, weightStr, designChargeStr) {
+      function calculateCakePrice(flavourName, weightStr, designChargeStr, customPricePerKg = null) {
         const flavour = findFlavourPricing(flavourName);
         const dc = parseInt(
           String(designChargeStr || designCharge || "0").replace(/\D/g, "") ||
@@ -12854,6 +12988,25 @@
         const w = parseWeightToKg(weightStr);
 
         let base = 0;
+        let ratePerKg = flavour.largeRate;
+
+        // Custom Rate per Kg (e.g. Full Fondant Cake at ₹1400/kg)
+        if (customPricePerKg && Number(customPricePerKg) > 0) {
+          ratePerKg = Number(customPricePerKg);
+          base = Math.round(w * ratePerKg);
+          return {
+            flavourName: flavour.name,
+            weightStr: weightStr,
+            weightInKg: w,
+            basePrice: base,
+            designCharge: 0,
+            totalPrice: base,
+            ratePerKg: ratePerKg,
+            isFondant: true,
+            isCustomRate: true,
+          };
+        }
+
         if (w <= 0.5) {
           base = flavour.smallRate;
         } else {
@@ -12868,6 +13021,8 @@
           designCharge: dc,
           totalPrice: base + dc,
           ratePerKg: flavour.largeRate,
+          isFondant: false,
+          isCustomRate: false,
         };
       }
 
@@ -13635,6 +13790,17 @@
         const btnReg = document.getElementById("btnBuyNowStyleRegular");
         const btnPhoto = document.getElementById("btnBuyNowStylePhoto");
         const photoBox = document.getElementById("buyNowPhotoCakeDetailsBox");
+        // Update Fondant Badge in Buy Now modal
+        const fondantBadgeEl = document.getElementById("buyNowFondantBadge");
+        if (fondantBadgeEl) {
+          if (isCustomPerKg && customRatePerKg > 0) {
+            fondantBadgeEl.style.display = "inline-flex";
+            fondantBadgeEl.textContent = `✨ ${buyNowTargetPhoto.cakeType || 'Full Fondant'} (₹${customRatePerKg}/Kg)`;
+          } else {
+            fondantBadgeEl.style.display = "none";
+          }
+        }
+
         const photoBadge = document.getElementById("buyNowPhotoCakePriceBadge");
 
         btnReg?.addEventListener("click", () => {
@@ -14737,11 +14903,26 @@
             previewHtml = `<img src="${latestPhoto.uri}" alt="${cat.name}" loading="lazy">`;
           }
 
+          const coverDownloadUrl = cat.imageUri || (latestPhoto && latestPhoto.uri) || "";
           card.innerHTML = `
-          <div class="cat-preview-box">${previewHtml}</div>
+          <div class="cat-preview-box" style="position: relative;">
+            ${coverDownloadUrl ? `
+              <button type="button" class="btn-card-download" title="Download Cover Photo" aria-label="Download Cover Photo" style="top: 6px; right: 6px; width: 30px; height: 30px; font-size: 14px;">
+                <ion-icon name="download-outline" style="pointer-events: none;"></ion-icon>
+              </button>
+            ` : ""}
+            ${previewHtml}
+          </div>
           <div class="cat-card-name">${cat.name}</div>
           <div class="cat-count-badge ${count > 0 ? "active" : ""}">${count} ${count === 1 ? "photo" : "photos"}</div>
         `;
+
+          if (coverDownloadUrl) {
+            card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
+              e.stopPropagation();
+              downloadCakeImage(coverDownloadUrl, `${cat.name} Cover`);
+            });
+          }
 
           card.addEventListener("click", () => {
             openCategoryDetail(cat);
@@ -15107,7 +15288,9 @@
           const isRecent = isRecentCake(cake);
 
           let weightBadgesHtml = `<span class="cake-weight-badge"><ion-icon name="scale-outline" style="font-size: 10px; margin-right: 2px;"></ion-icon>0.5 Kg - 5 Kg (Custom available)</span>`;
-          let priceDisplayHtml = `<span class="cake-card-price">₹${smallP} <span style="font-size: 11.5px; font-weight: 600; color: #9ca3af; margin: 0 1px;">/</span> ₹${largeP} <span style="font-size: 10px; font-weight: 600; color: #6b7280;">(0.5kg / 1kg)</span></span>`;
+          let priceDisplayHtml = (cake.pricePerKg && Number(cake.pricePerKg) > 0)
+            ? `<span class="cake-card-price" style="color: #be123c;">₹${cake.pricePerKg} <span style="font-size: 11px; font-weight: 700; color: #9d174d;">/ Kg</span> <span style="font-size: 9.5px; font-weight: 800; background: #fdf2f8; color: #be123c; border: 1px solid #fbcfe8; padding: 1px 5px; border-radius: 4px; margin-left: 2px;">${cake.cakeType || 'Full Fondant'}</span></span>`
+            : `<span class="cake-card-price">₹${smallP} <span style="font-size: 11.5px; font-weight: 600; color: #9ca3af; margin: 0 1px;">/</span> ₹${largeP} <span style="font-size: 10px; font-weight: 600; color: #6b7280;">(0.5kg / 1kg)</span></span>`;
 
           const card = document.createElement("div");
           card.className = "cake-catalog-card";
@@ -15370,6 +15553,7 @@
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
+          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
           <img src="${photo.uri}" alt="${catName}" loading="lazy">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${catIcon}</span>
@@ -15413,6 +15597,7 @@
           card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
           ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
@@ -16705,7 +16890,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=15').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=17').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -16932,6 +17117,60 @@
       // Admin Cake Edit Modal Functions
       let pendingNewCakeImageBase64 = null;
 
+      
+      // ========================================================
+      // ADMIN FONDANT & CUSTOM RATE PER KG CONTROLLERS
+      // ========================================================
+      function setAdminPricingMode(mode, rate = 1400, typeName = "Full Fondant Cake") {
+        const isFondant = mode === "fondant";
+        const btnStandard = document.getElementById("btnAdminModeStandard");
+        const btnFondant = document.getElementById("btnAdminModeFondant");
+        const fondantBox = document.getElementById("adminEditFondantOptionsBox");
+        const standardDcBox = document.getElementById("adminEditStandardDcBox");
+        const badge = document.getElementById("adminEditPriceModeBadge");
+        const rateInput = document.getElementById("adminEditPricePerKgInput");
+        const typeInput = document.getElementById("adminEditCakeTypeInput");
+
+        if (btnStandard) {
+          btnStandard.style.border = isFondant ? "1.5px solid #e5e7eb" : "2px solid var(--primary)";
+          btnStandard.style.background = isFondant ? "#fff" : "#fff1f2";
+          btnStandard.style.color = isFondant ? "#374151" : "#be123c";
+        }
+        if (btnFondant) {
+          btnFondant.style.border = isFondant ? "2px solid #db2777" : "1.5px solid #e5e7eb";
+          btnFondant.style.background = isFondant ? "linear-gradient(135deg, #fdf2f8, #fce7f3)" : "#fff";
+          btnFondant.style.color = isFondant ? "#be123c" : "#374151";
+        }
+        if (badge) {
+          badge.textContent = isFondant ? "Full Fondant / ₹/Kg" : "Flavour + Design Charge";
+          badge.style.background = isFondant ? "#fdf2f8" : "#f1f5f9";
+          badge.style.color = isFondant ? "#be123c" : "#475569";
+          badge.style.borderColor = isFondant ? "#f472b6" : "#cbd5e1";
+        }
+        if (fondantBox) fondantBox.style.display = isFondant ? "block" : "none";
+        if (standardDcBox) standardDcBox.style.display = isFondant ? "none" : "block";
+
+        if (rateInput && rate) rateInput.value = rate;
+        if (typeInput && typeName) typeInput.value = typeName;
+        updateAdminPriceLivePreview();
+      }
+
+      window.setAdminPricePerKg = function(rate, typeName) {
+        const rateInput = document.getElementById("adminEditPricePerKgInput");
+        const typeInput = document.getElementById("adminEditCakeTypeInput");
+        if (rateInput) rateInput.value = rate;
+        if (typeInput && typeName) typeInput.value = typeName;
+        setAdminPricingMode("fondant", rate, typeName);
+      };
+
+      function updateAdminPriceLivePreview() {
+        const rateInput = document.getElementById("adminEditPricePerKgInput");
+        const preview = document.getElementById("adminEditPriceLivePreview");
+        if (!rateInput || !preview) return;
+        const r = parseFloat(rateInput.value) || 1400;
+        preview.innerHTML = `Live Pricing: 1 Kg = ₹${r} | 2 Kg = ₹${r * 2} | <strong>3 Kg = ₹${r * 3}</strong> | 4 Kg = ₹${r * 4}`;
+      }
+
       function openAdminEditCakeModal(item) {
         if (!item) return;
         currentEditingPhoto = item;
@@ -17025,6 +17264,16 @@
             document.querySelectorAll("#adminEditQtyChips .quick-qty-chip").forEach((chip) => {
               chip.classList.toggle("active", chip.dataset.qty === currentMoq);
             });
+
+            // Fondant / Custom Rate per Kg detection
+            const isFondant = Boolean(
+              item.pricingType === "custom_per_kg" ||
+              (item.pricePerKg && Number(item.pricePerKg) > 0) ||
+              item.isFondantCake
+            );
+            const pricePerKgVal = isFondant ? Number(item.pricePerKg || 1400) : 1400;
+            const cakeTypeVal = item.cakeType || (isFondant ? "Full Fondant Cake" : "Full Fondant Cake");
+            setAdminPricingMode(isFondant ? "fondant" : "standard", pricePerKgVal, cakeTypeVal);
           }
         }
 
@@ -17094,11 +17343,23 @@
             const dcInput = document.getElementById("adminEditDesignChargeInput");
             const moqInput = document.getElementById("adminEditMinOrderQtyInput");
 
-            const newDc = dcInput ? dcInput.value.trim() || "150" : "150";
+            const isFondantMode = document.getElementById("adminEditFondantOptionsBox")?.style.display !== "none";
+            const pricePerKgInput = document.getElementById("adminEditPricePerKgInput");
+            const cakeTypeInput = document.getElementById("adminEditCakeTypeInput");
+
+            const pricePerKg = isFondantMode ? (parseFloat(pricePerKgInput?.value) || 1400) : 0;
+            const cakeType = isFondantMode ? (cakeTypeInput?.value.trim() || "Full Fondant Cake") : "";
+            const pricingType = isFondantMode ? "custom_per_kg" : "standard";
+
+            const newDc = isFondantMode ? "0" : (dcInput ? dcInput.value.trim() || "150" : "150");
             const newMoq = moqInput ? moqInput.value.trim() || "1 Kg" : "1 Kg";
 
             updatedDoc.designCharge = newDc;
             updatedDoc.minOrderQty = newMoq;
+            updatedDoc.pricingType = pricingType;
+            updatedDoc.pricePerKg = pricePerKg;
+            updatedDoc.cakeType = cakeType;
+            updatedDoc.isFondantCake = isFondantMode;
 
             await db.collection("photos").doc(currentEditingPhoto.id).set(updatedDoc, { merge: true });
 
@@ -17832,7 +18093,7 @@
 
         // Toggle design charge and MOQ rows for catalog cakes
         const dcRow = document.getElementById("buyNowDesignChargeRow");
-        if (dcRow) dcRow.style.display = isCake ? "none" : "flex";
+        if (dcRow) dcRow.style.display = (isCake || isCustomPerKg) ? "none" : "flex";
         const moqRow = document.getElementById("buyNowMinQtyRow");
         if (moqRow) moqRow.style.display = isCake ? "none" : "flex";
         const moqNotice = document.getElementById("buyNowMinQtyNotice");
@@ -17927,8 +18188,31 @@
         const currentMoq = isCake ? "No Minimum (0.5 Kg)" : photoMoqStr;
 
         const chosenKg = parseWeightToKg(selectedWeight);
+        const isCustomPerKg = Boolean(
+          buyNowTargetPhoto && (
+            buyNowTargetPhoto.pricingType === "custom_per_kg" ||
+            (buyNowTargetPhoto.pricePerKg && Number(buyNowTargetPhoto.pricePerKg) > 0) ||
+            buyNowTargetPhoto.isFondantCake
+          )
+        );
+        const customRatePerKg = isCustomPerKg ? Number(buyNowTargetPhoto.pricePerKg || 1400) : 0;
+
         let priceInfo;
-        if (isCake && buyNowTargetPhoto) {
+        if (customRatePerKg > 0) {
+          const base = Math.round(chosenKg * customRatePerKg);
+          priceInfo = {
+            flavourName: selectedFlavour,
+            weightStr: selectedWeight,
+            weightInKg: chosenKg,
+            basePrice: base,
+            designCharge: 0,
+            totalPrice: base,
+            ratePerKg: customRatePerKg,
+            isFondant: true,
+            isCustomRate: true,
+            cakeType: buyNowTargetPhoto.cakeType || "Full Fondant Cake",
+          };
+        } else if (isCake && buyNowTargetPhoto) {
           const smallP =
             buyNowTargetPhoto.smallPrice || buyNowTargetPhoto.price || 450;
           const largeP =
@@ -18623,24 +18907,45 @@
             }
           }
 
+          const isBuyNowCustomKg = Boolean(
+            buyNowTargetPhoto && (
+              buyNowTargetPhoto.pricingType === "custom_per_kg" ||
+              (buyNowTargetPhoto.pricePerKg && Number(buyNowTargetPhoto.pricePerKg) > 0) ||
+              buyNowTargetPhoto.isFondantCake
+            )
+          );
+          const buyNowCustomRatePerKg = isBuyNowCustomKg ? Number(buyNowTargetPhoto.pricePerKg || 1400) : 0;
+
           const priceInfo =
-            isCake && buyNowTargetPhoto
+            buyNowCustomRatePerKg > 0
               ? {
                   flavourName: selectedFlavour,
                   weightStr: selectedWeight,
                   weightInKg: chosenKg,
-                  basePrice: cakeCatalogBasePrice,
+                  basePrice: Math.round(chosenKg * buyNowCustomRatePerKg),
                   designCharge: 0,
-                  totalPrice: cakeCatalogBasePrice,
-                  ratePerKg:
-                    buyNowTargetPhoto.largePrice ||
-                    Math.round(
-                      (buyNowTargetPhoto.smallPrice ||
-                        buyNowTargetPhoto.price ||
-                        450) * 1.75,
-                    ),
+                  totalPrice: Math.round(chosenKg * buyNowCustomRatePerKg),
+                  ratePerKg: buyNowCustomRatePerKg,
+                  isFondant: true,
+                  cakeType: buyNowTargetPhoto.cakeType || "Full Fondant Cake",
                 }
-              : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
+              : isCake && buyNowTargetPhoto
+                ? {
+                    flavourName: selectedFlavour,
+                    weightStr: selectedWeight,
+                    weightInKg: chosenKg,
+                    basePrice: cakeCatalogBasePrice,
+                    designCharge: 0,
+                    totalPrice: cakeCatalogBasePrice,
+                    ratePerKg:
+                      buyNowTargetPhoto.largePrice ||
+                      Math.round(
+                        (buyNowTargetPhoto.smallPrice ||
+                          buyNowTargetPhoto.price ||
+                          450) * 1.75,
+                      ),
+                  }
+                : calculateCakePrice(selectedFlavour, selectedWeight, currentDc);
 
           let photoCakeFee = 0;
           if (isCake && isBuyNowPhotoCakeActive) {
@@ -18754,6 +19059,9 @@
           }
           msg += `• *Cake Ref:* #${photoRefId}\n`;
           msg += `• *Category:* ${catName}\n`;
+          if (isBuyNowCustomKg && buyNowCustomRatePerKg > 0) {
+            msg += `• *Cake Type:* ${buyNowTargetPhoto.cakeType || 'Full Fondant Cake'} (✨ ₹${buyNowCustomRatePerKg} / Kg)\n`;
+          }
           msg += `• *Selected Flavour:* ${selectedFlavour}\n`;
           if (flavourNote) msg += `• *Preferred Flavour Note:* ${flavourNote}\n`;
           msg += `• *Weight / Size:* ${selectedWeight}${isCake && isMentionWeightActive ? " (Custom Mentioned Weight)" : ""}\n`;
@@ -18775,7 +19083,15 @@
           }
           msg += `──────────────────────────\n`;
           msg += `💰 *Price Breakdown:*\n`;
-          msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
+          if (isBuyNowCustomKg && buyNowCustomRatePerKg > 0) {
+            msg += `• *Pricing:* ${selectedWeight} × ₹${buyNowCustomRatePerKg}/Kg = ₹${priceInfo.basePrice}\n`;
+          } else {
+            if (isDirectCustomKg && directCustomRatePerKg > 0) {
+            msg += `• *Pricing:* ${directSelectedWeight} × ₹${directCustomRatePerKg}/Kg = ₹${priceInfo.basePrice}\n`;
+          } else {
+            msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
+          }
+          }
           if (isCake && isBuyNowPhotoCakeActive) {
             const photoP = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
             msg += `• *Edible Photo Cake Print:* +₹${photoP.charge} ${photoP.isRush ? '(⚡ Express Rush: Ordered after 3 PM today / before 3:30 PM tomorrow)' : '(Standard)'}\n`;
@@ -19026,8 +19342,31 @@
             ? directCakeTargetPhoto.designCharge
             : "150";
         const chosenKg = parseWeightToKg(directSelectedWeight);
+        const isDirectCustomKg = Boolean(
+          directCakeTargetPhoto && (
+            directCakeTargetPhoto.pricingType === "custom_per_kg" ||
+            (directCakeTargetPhoto.pricePerKg && Number(directCakeTargetPhoto.pricePerKg) > 0) ||
+            directCakeTargetPhoto.isFondantCake
+          )
+        );
+        const directCustomRatePerKg = isDirectCustomKg ? Number(directCakeTargetPhoto.pricePerKg || 1400) : 0;
+
         let priceInfo;
-        if (isCake && directCakeTargetPhoto) {
+        if (directCustomRatePerKg > 0) {
+          const base = Math.round(chosenKg * directCustomRatePerKg);
+          priceInfo = {
+            flavourName: directSelectedFlavour,
+            weightStr: directSelectedWeight,
+            weightInKg: chosenKg,
+            basePrice: base,
+            designCharge: 0,
+            totalPrice: base,
+            ratePerKg: directCustomRatePerKg,
+            isFondant: true,
+            isCustomRate: true,
+            cakeType: directCakeTargetPhoto.cakeType || "Full Fondant Cake",
+          };
+        } else if (isCake && directCakeTargetPhoto) {
           const smallP =
             directCakeTargetPhoto.smallPrice ||
             directCakeTargetPhoto.price ||
@@ -19055,6 +19394,16 @@
             directSelectedWeight,
             currentDc,
           );
+        }
+
+        const directFondantBadge = document.getElementById("directCakeFondantBadge");
+        if (directFondantBadge) {
+          if (isDirectCustomKg && directCustomRatePerKg > 0) {
+            directFondantBadge.style.display = "inline-block";
+            directFondantBadge.textContent = `✨ ${directCakeTargetPhoto.cakeType || 'Full Fondant'} (₹${directCustomRatePerKg}/Kg)`;
+          } else {
+            directFondantBadge.style.display = "none";
+          }
         }
 
         const totalEl = document.getElementById("directCakeTotalRate");
@@ -20312,6 +20661,27 @@
           }
         });
 
+      const handleDirectCakeDownload = () => {
+        if (!directCakeTargetPhoto) return;
+        const catName =
+          directCakeTargetPhoto.categoryName ||
+          getCakeCategoryName(directCakeTargetPhoto.categoryId);
+        const cakeName =
+          directCakeTargetPhoto.name ||
+          directCakeTargetPhoto.title ||
+          `${catName} Cake`;
+        downloadCakeImage(directCakeTargetPhoto.uri, cakeName);
+      };
+      document
+        .getElementById("btnDownloadDirectCake")
+        ?.addEventListener("click", handleDirectCakeDownload);
+      document
+        .getElementById("btnDownloadDirectCakeImage")
+        ?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleDirectCakeDownload();
+        });
+
       document
         .getElementById("btnShareDirectCake")
         ?.addEventListener("click", async () => {
@@ -21055,6 +21425,15 @@
         });
 
       // Admin Cake Edit Modal Listeners
+      // Admin Pricing Mode Switcher Listeners
+      document.getElementById("btnAdminModeStandard")?.addEventListener("click", () => {
+        setAdminPricingMode("standard");
+      });
+      document.getElementById("btnAdminModeFondant")?.addEventListener("click", () => {
+        setAdminPricingMode("fondant", 1400, "Full Fondant Cake");
+      });
+      document.getElementById("adminEditPricePerKgInput")?.addEventListener("input", updateAdminPriceLivePreview);
+
       document
         .getElementById("btnCloseAdminEditCake")
         ?.addEventListener("click", closeAdminEditCakeModal);
