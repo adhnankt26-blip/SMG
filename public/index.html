@@ -3434,28 +3434,12 @@
          2-SECOND WELCOME & LOADING SCREEN (QR SCAN & APP ENTRY)
          ======================================================== */
       .app-splash-screen {
+        display: none !important;
         position: fixed;
         inset: 0;
-        z-index: 99999;
-        background: radial-gradient(
-          circle at 50% 35%,
-          #ffffff 0%,
-          #fff7ed 55%,
-          #fed7aa 120%
-        );
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px;
-        box-sizing: border-box;
-        opacity: 1;
-        transform: scale(1);
-        transition:
-          opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
-          transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
-        user-select: none;
-        -webkit-user-select: none;
-        overflow: hidden;
+        z-index: -9999;
+        opacity: 0;
+        pointer-events: none;
       }
 
       .app-splash-screen.fade-out {
@@ -4584,7 +4568,7 @@
     <!-- ========================================================
        CAKE STUDIO 2-SECOND WELCOME & LOADING SCREEN (QR SCAN & APP ENTRY)
        ======================================================== -->
-    <div id="appSplashScreen" class="app-splash-screen">
+    <div id="appSplashScreen" class="app-splash-screen" style="display: none !important;">
       <div class="splash-content-container">
         <!-- Floating Bakery Sparkles -->
         <div class="splash-sparkle sp-1">✨</div>
@@ -12775,14 +12759,21 @@
       const liveWebUrl = window.location.origin;
       document.getElementById("qrModalLinkBadge").textContent = liveWebUrl;
 
-      new QRCode(document.getElementById("qrModalCodeBox"), {
-        text: liveWebUrl,
-        width: 170,
-        height: 170,
-        colorDark: "#111827",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H,
-      });
+      try {
+        const qrBox = document.getElementById("qrModalCodeBox");
+        if (qrBox && typeof QRCode !== "undefined") {
+          new QRCode(qrBox, {
+            text: liveWebUrl,
+            width: 170,
+            height: 170,
+            colorDark: "#111827",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
+        }
+      } catch (qrErr) {
+        console.warn("QR code initialization non-blocking warning:", qrErr);
+      }
 
       // 2. Tab Navigation System (_layout.tsx replica)
       const tabItems = document.querySelectorAll(".tab-item");
@@ -13137,16 +13128,7 @@
         const btnReg = document.getElementById("btnBuyNowStyleRegular");
         const btnPhoto = document.getElementById("btnBuyNowStylePhoto");
         const photoBox = document.getElementById("buyNowPhotoCakeDetailsBox");
-        // Update Fondant Badge in Buy Now modal
-        const fondantBadgeEl = document.getElementById("buyNowFondantBadge");
-        if (fondantBadgeEl) {
-          if (isCustomPerKg && customRatePerKg > 0) {
-            fondantBadgeEl.style.display = "inline-flex";
-            fondantBadgeEl.textContent = `✨ ${buyNowTargetPhoto.cakeType || 'Full Fondant'} (₹${customRatePerKg}/Kg)`;
-          } else {
-            fondantBadgeEl.style.display = "none";
-          }
-        }
+        // Fondant badge is dynamically handled in openBuyNowModal and updateBuyNowPrice
 
         const photoBadge = document.getElementById("buyNowPhotoCakePriceBadge");
 
@@ -16228,7 +16210,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=17').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=18').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17428,6 +17410,25 @@
 
         const photoMoqStr =
           (photo.minOrderQty && String(photo.minOrderQty).trim()) || "1 Kg";
+
+        const isCustomPerKg = Boolean(
+          photo && (
+            photo.pricingType === "custom_per_kg" ||
+            (photo.pricePerKg && Number(photo.pricePerKg) > 0) ||
+            photo.isFondantCake
+          )
+        );
+        const customRatePerKg = isCustomPerKg ? Number(photo.pricePerKg || 1400) : 0;
+
+        const buyNowFondantBadgeEl = document.getElementById("buyNowFondantBadge");
+        if (buyNowFondantBadgeEl) {
+          if (customRatePerKg > 0) {
+            buyNowFondantBadgeEl.style.display = "inline-flex";
+            buyNowFondantBadgeEl.textContent = `✨ ${photo.cakeType || 'Full Fondant'} (₹${customRatePerKg}/Kg)`;
+          } else {
+            buyNowFondantBadgeEl.style.display = "none";
+          }
+        }
 
         // Toggle design charge and MOQ rows for catalog cakes
         const dcRow = document.getElementById("buyNowDesignChargeRow");
@@ -22001,27 +22002,10 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
 
       function initSplashScreen() {
         const splashEl = document.getElementById("appSplashScreen");
-        const barEl = document.getElementById("splashProgressBar");
-        if (!splashEl) return;
-
-        if (splashTimer) clearTimeout(splashTimer);
-        if (splashHideTimer) clearTimeout(splashHideTimer);
-
-        splashEl.classList.remove("hidden", "fade-out");
-
-        if (barEl) {
-          barEl.classList.remove("splash-progress-animate");
-          void barEl.offsetWidth; // Force reflow to restart CSS animation cleanly
-          barEl.classList.add("splash-progress-animate");
+        if (splashEl) {
+          splashEl.style.display = "none";
+          splashEl.classList.add("hidden");
         }
-
-        // Exactly 2 seconds loading duration as requested
-        splashTimer = setTimeout(() => {
-          splashEl.classList.add("fade-out");
-          splashHideTimer = setTimeout(() => {
-            splashEl.classList.add("hidden");
-          }, 550);
-        }, 2500);
       }
 
       window.previewSplashScreen = function () {
