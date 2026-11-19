@@ -1965,7 +1965,8 @@
         flex-shrink: 0;
       }
 
-      /* Content visibility & rendering performance boost for cake cards */
+      /* Content visibility & rendering performance boost for all cards */
+      .cat-card,
       .cake-catalog-card,
       .photo-item-card {
         content-visibility: auto;
@@ -12437,6 +12438,188 @@
         return '<ion-icon name="folder-outline"></ion-icon>';
       }
 
+      // High-resolution performance diagnostics
+      const __perf = {
+        marks: {},
+        start(name) { this.marks[name] = performance.now(); },
+        end(name, label) {
+          if (!this.marks[name]) return 0;
+          const dur = (performance.now() - this.marks[name]).toFixed(1);
+          console.log(`%c[Perf] ${label || name}: ${dur}ms`, "color: #059669; font-weight: bold; background: #ecfdf5; padding: 2px 6px; border-radius: 4px;");
+          return Number(dur);
+        }
+      };
+      __perf.start("app_boot");
+
+      // ========================================================
+      // HIGH PERFORMANCE CLIENT CACHE (IndexedDB + LocalStorage SWR)
+      // ========================================================
+      const CakeStudioCache = {
+        DB_NAME: "CakeStudioCacheDB",
+        DB_VERSION: 1,
+        STORE_NAME: "cache_store",
+        TTL: 10 * 60 * 1000, // 10 minutes short TTL for fast revalidation
+        _dbPromise: null,
+
+        openDB() {
+          if (this._dbPromise) return this._dbPromise;
+          this._dbPromise = new Promise((resolve) => {
+            try {
+              if (!window.indexedDB) return resolve(null);
+              const req = window.indexedDB.open(this.DB_NAME, this.DB_VERSION);
+              req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                  db.createObjectStore(this.STORE_NAME, { keyPath: "key" });
+                }
+              };
+              req.onsuccess = (e) => resolve(e.target.result);
+              req.onerror = () => resolve(null);
+            } catch (err) {
+              resolve(null);
+            }
+          });
+          return this._dbPromise;
+        },
+
+        async get(key) {
+          try {
+            const db = await this.openDB();
+            if (!db) return null;
+            return new Promise((resolve) => {
+              try {
+                const tx = db.transaction(this.STORE_NAME, "readonly");
+                const store = tx.objectStore(this.STORE_NAME);
+                const req = store.get(key);
+                req.onsuccess = () => {
+                  const rec = req.result;
+                  if (!rec) return resolve(null);
+                  if (rec.cachedAt && (Date.now() - rec.cachedAt > (rec.ttl || this.TTL))) {
+                    return resolve(null);
+                  }
+                  resolve(rec.data);
+                };
+                req.onerror = () => resolve(null);
+              } catch (txErr) {
+                resolve(null);
+              }
+            });
+          } catch (e) {
+            return null;
+          }
+        },
+
+        async set(key, data, ttlMs = this.TTL) {
+          try {
+            const db = await this.openDB();
+            if (!db) return;
+            const tx = db.transaction(this.STORE_NAME, "readwrite");
+            const store = tx.objectStore(this.STORE_NAME);
+            store.put({ key, data, cachedAt: Date.now(), ttl: ttlMs });
+          } catch (e) {}
+        },
+
+        getSync(key) {
+          try {
+            const raw = localStorage.getItem("cs_cache_" + key);
+            if (!raw) return null;
+            const item = JSON.parse(raw);
+            if (Date.now() - item.cachedAt > (item.ttl || this.TTL)) return null;
+            return item.data;
+          } catch (e) { return null; }
+        },
+
+        setSync(key, data, ttlMs = this.TTL) {
+          try {
+            localStorage.setItem("cs_cache_" + key, JSON.stringify({ data, cachedAt: Date.now(), ttl: ttlMs }));
+          } catch (e) {}
+        }
+      };
+
+      let isCacheHydrated = false;
+      let currentActiveTabId = "screenCategory";
+      const tabDirtyFlags = {
+        screenCategory: true,
+        screenCakes: true,
+        screenGallery: true,
+        screenCategoryDetail: true,
+        screenAdmin: true
+      };
+
+      function markTabsDirty(...tabIds) {
+        if (tabIds.length === 0) {
+          Object.keys(tabDirtyFlags).forEach((k) => (tabDirtyFlags[k] = true));
+        } else {
+          tabIds.forEach((id) => (tabDirtyFlags[id] = true));
+        }
+      }
+
+      // Synchronous boot hydration for instant UI shell
+      function hydrateCacheSync() {
+        __perf.start("cache_sync");
+        const cachedCats = CakeStudioCache.getSync("categories");
+        if (Array.isArray(cachedCats) && cachedCats.length > 0) {
+          categories = cachedCats;
+          if (!selectedAdminCategoryId && categories.length > 0) {
+            selectedAdminCategoryId = categories[0].id;
+          }
+        }
+        const cachedCovers = CakeStudioCache.getSync("covers");
+        if (cachedCovers && typeof cachedCovers === "object") {
+          categoryCoversMap = cachedCovers;
+          window.categoryCoversMap = cachedCovers;
+        }
+        const cachedPricing = CakeStudioCache.getSync("pricing_catalog");
+        if (Array.isArray(cachedPricing) && cachedPricing.length > 0) {
+          CAKE_PRICING_CATALOG = cachedPricing;
+        }
+        __perf.end("cache_sync", "Synchronous Cache Hydration");
+      }
+
+      // Fast asynchronous IndexedDB hydration for photos & catalog cakes
+      async function hydrateCacheAsync() {
+        __perf.start("cache_async");
+        try {
+          const [cachedPhotos, cachedCakes, cachedCategories, cachedCovers] = await Promise.all([
+            CakeStudioCache.get("photos"),
+            CakeStudioCache.get("cakes"),
+            CakeStudioCache.get("categories"),
+            CakeStudioCache.get("covers")
+          ]);
+
+          let anyUpdated = false;
+          if (Array.isArray(cachedCategories) && cachedCategories.length > 0) {
+            categories = cachedCategories;
+            anyUpdated = true;
+          }
+          if (cachedCovers && typeof cachedCovers === "object") {
+            categoryCoversMap = Object.assign(categoryCoversMap || {}, cachedCovers);
+            window.categoryCoversMap = categoryCoversMap;
+            anyUpdated = true;
+          }
+          if (Array.isArray(cachedPhotos) && cachedPhotos.length > 0) {
+            allPhotos = cachedPhotos;
+            anyUpdated = true;
+          }
+          if (Array.isArray(cachedCakes) && cachedCakes.length > 0) {
+            catalogCakes = cachedCakes;
+            anyUpdated = true;
+          }
+
+          if (anyUpdated) {
+            isCacheHydrated = true;
+            renderCurrentActiveTab();
+            updateStats();
+            __perf.end("cache_async", `IndexedDB Cache Hydrated (${allPhotos.length} photos, ${catalogCakes.length} cakes, ${categories.length} categories)`);
+            if (typeof fastDismissSplashIfReady === "function") {
+              fastDismissSplashIfReady();
+            }
+          }
+        } catch (err) {
+          console.warn("[Perf] Cache async hydration notice:", err);
+        }
+      }
+
       // App State
       let allPhotos = [];
       let catalogCakes = [];
@@ -14497,10 +14680,25 @@
 
         window.scrollTo({ top: 0, behavior: "smooth" });
 
-        if (targetId === "screenCakes") {
-          renderCakesScreen();
+        currentActiveTabId = targetId;
+        if (targetId === "screenCategory") {
+          if (tabDirtyFlags.screenCategory !== false) {
+            renderCategoryScreen();
+            tabDirtyFlags.screenCategory = false;
+          }
+        } else if (targetId === "screenCakes") {
+          if (tabDirtyFlags.screenCakes !== false) {
+            renderCakesScreen();
+            tabDirtyFlags.screenCakes = false;
+          }
+        } else if (targetId === "screenGallery") {
+          if (tabDirtyFlags.screenGallery !== false) {
+            renderGalleryScreen();
+            tabDirtyFlags.screenGallery = false;
+          }
         } else if (targetId === "screenAdmin") {
           renderAdminView();
+          tabDirtyFlags.screenAdmin = false;
           if (typeof updateAdminBiometricUI === "function") {
             updateAdminBiometricUI();
           }
@@ -14626,7 +14824,10 @@
             if (orderA !== orderB) return orderA - orderB;
             return (b.timestamp || 0) - (a.timestamp || 0);
           });
-          renderAllViews();
+          CakeStudioCache.set("photos", allPhotos);
+          markTabsDirty("screenGallery", "screenCategoryDetail", "screenAdmin", "screenCategory");
+          renderCurrentActiveTab();
+          updateStats();
           if (!initialDeepLinkHandled) {
             checkInitialDeepLink();
           }
@@ -14646,8 +14847,14 @@
             if (orderA !== orderB) return orderA - orderB;
             return (b.timestamp || 0) - (a.timestamp || 0);
           });
-          renderCakesScreen();
-          if (typeof renderAdminCakesList === "function") {
+          CakeStudioCache.set("cakes", catalogCakes);
+          tabDirtyFlags.screenCakes = false;
+          if (currentActiveTabId === "screenCakes") {
+            renderCakesScreen();
+          } else {
+            tabDirtyFlags.screenCakes = true;
+          }
+          if (currentActiveTabId === "screenAdmin" && typeof renderAdminCakesList === "function") {
             renderAdminCakesList();
           }
           updateStats();
@@ -14664,13 +14871,16 @@
               categoryCoversMap[d.id] = data.imageUri;
             }
           });
+          CakeStudioCache.set("covers", categoryCoversMap);
+          CakeStudioCache.setSync("covers", categoryCoversMap);
           if (categories && categories.length > 0) {
             categories.forEach((cat) => {
               if (categoryCoversMap[cat.id]) {
                 cat.imageUri = categoryCoversMap[cat.id];
               }
             });
-            renderAllViews();
+            markTabsDirty("screenCategory", "screenAdmin");
+            renderCurrentActiveTab();
           }
         });
 
@@ -14739,10 +14949,14 @@
                 { id: "cupcakes", name: "Cupcakes & Treats", icon: "star" },
               ];
             }
+            CakeStudioCache.set("categories", categories);
+            CakeStudioCache.setSync("categories", categories);
             if (!selectedAdminCategoryId && categories.length > 0) {
               selectedAdminCategoryId = categories[0].id;
             }
-            renderAllViews();
+            markTabsDirty("screenCategory", "screenGallery", "screenCategoryDetail", "screenAdmin");
+            renderCurrentActiveTab();
+            updateStats();
           });
 
         // Listen to 'settings/pricing_catalog' for Cake Menu & Rates
@@ -14880,15 +15094,31 @@
         }
       }
 
-      // 4. Render All Views
-      function renderAllViews() {
-        renderCategoryScreen();
-        renderCakesScreen();
-        renderGalleryScreen();
-        if (currentSelectedCategoryDetail) {
-          renderCategoryDetailScreen(currentSelectedCategoryDetail);
+      // 4. Render All Views (Optimized with Active Tab Rendering & Dirty Flags)
+      function renderCurrentActiveTab() {
+        if (currentActiveTabId === "screenCategory") {
+          renderCategoryScreen();
+          tabDirtyFlags.screenCategory = false;
+        } else if (currentActiveTabId === "screenCakes") {
+          renderCakesScreen();
+          tabDirtyFlags.screenCakes = false;
+        } else if (currentActiveTabId === "screenGallery") {
+          renderGalleryScreen();
+          tabDirtyFlags.screenGallery = false;
+        } else if (currentActiveTabId === "screenCategoryDetail") {
+          if (currentSelectedCategoryDetail) {
+            renderCategoryDetailScreen(currentSelectedCategoryDetail);
+          }
+          tabDirtyFlags.screenCategoryDetail = false;
+        } else if (currentActiveTabId === "screenAdmin") {
+          renderAdminView();
+          tabDirtyFlags.screenAdmin = false;
         }
-        renderAdminView();
+      }
+
+      function renderAllViews() {
+        markTabsDirty();
+        renderCurrentActiveTab();
         updateStats();
       }
 
@@ -14925,7 +15155,7 @@
               item.className = "recent-scroll-item";
               item.innerHTML = `
                 <div class="recent-scroll-thumb">
-                  <img src="${p.uri}" alt="${catName}" loading="lazy">
+                  <img src="${p.uri}" alt="${catName}" loading="${idx < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${idx < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';">
                   <span class="recent-badge" style="font-size: 8.5px; padding: 2px 5px; top: 4px; left: 4px; display: inline-flex; align-items: center;"><ion-icon name="flash" style="font-size: 10px;"></ion-icon></span>
                 </div>
                 <div class="recent-scroll-name">${catName}</div>
@@ -14970,9 +15200,9 @@
 
           let previewHtml = `<span style="font-size: 44px; display: flex; align-items: center; justify-content: center; color: var(--primary);">${getCategoryIcon(cat.icon)}</span>`;
           if (cat.imageUri) {
-            previewHtml = `<img src="${cat.imageUri}" alt="${cat.name}" loading="lazy">`;
+            previewHtml = `<img src="${cat.imageUri}" alt="${cat.name}" loading="${filtered.indexOf(cat) < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${filtered.indexOf(cat) < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';">`;
           } else if (latestPhoto && latestPhoto.uri) {
-            previewHtml = `<img src="${latestPhoto.uri}" alt="${cat.name}" loading="lazy">`;
+            previewHtml = `<img src="${latestPhoto.uri}" alt="${cat.name}" loading="${filtered.indexOf(cat) < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${filtered.indexOf(cat) < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';">`;
           }
 
           const coverDownloadUrl = cat.imageUri || (latestPhoto && latestPhoto.uri) || "";
@@ -15004,10 +15234,14 @@
         });
       }
 
+      let catSearchDebounceTimer = null;
       document
         .getElementById("catSearchInput")
         .addEventListener("input", () => {
-          renderCategoryScreen();
+          if (catSearchDebounceTimer) clearTimeout(catSearchDebounceTimer);
+          catSearchDebounceTimer = setTimeout(() => {
+            renderCategoryScreen();
+          }, 120);
         });
 
       document
@@ -15280,7 +15514,7 @@
               <ion-icon name="download-outline"></ion-icon>
             </button>
             <span class="cake-card-badge">${catIcon} ${catName}</span>
-            <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" decoding="async" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+            <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           </div>
           <div class="cake-card-body">
             <div>
@@ -15554,7 +15788,7 @@
             <ion-icon name="download-outline"></ion-icon>
           </button>
           ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
-          <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async">
+          <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${catIcon}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${catName}</span>
@@ -15774,7 +16008,7 @@
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
-          <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+          <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src='splash.jpg';" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
@@ -17165,7 +17399,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=21').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=22').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -22998,6 +23232,28 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
       let splashTimer = null;
       let splashHideTimer = null;
 
+      function dismissSplashScreen() {
+        const splashEl = document.getElementById("appSplashScreen");
+        if (!splashEl || splashEl.classList.contains("hidden")) return;
+        if (splashTimer) clearTimeout(splashTimer);
+        if (splashHideTimer) clearTimeout(splashHideTimer);
+        splashEl.style.pointerEvents = "none";
+        splashEl.classList.add("fade-out");
+        splashHideTimer = setTimeout(() => {
+          splashEl.classList.add("hidden");
+        }, 380);
+      }
+
+      function fastDismissSplashIfReady() {
+        const splashEl = document.getElementById("appSplashScreen");
+        if (!splashEl || splashEl.classList.contains("hidden")) return;
+        // If data is ready from cache, gracefully fade out quickly so shell is immediately interactive
+        if (splashTimer) clearTimeout(splashTimer);
+        splashTimer = setTimeout(() => {
+          dismissSplashScreen();
+        }, 400);
+      }
+
       function initSplashScreen() {
         const splashEl = document.getElementById("appSplashScreen");
         const barEl = document.getElementById("splashProgressBar");
@@ -23006,7 +23262,11 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
         if (splashTimer) clearTimeout(splashTimer);
         if (splashHideTimer) clearTimeout(splashHideTimer);
 
+        splashEl.style.pointerEvents = "auto";
         splashEl.classList.remove("hidden", "fade-out");
+
+        // Allow instant tap-to-dismiss so it never blocks the user
+        splashEl.onclick = () => dismissSplashScreen();
 
         if (barEl) {
           barEl.classList.remove("splash-progress-animate");
@@ -23014,13 +23274,11 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
           barEl.classList.add("splash-progress-animate");
         }
 
-        // Smooth 2 seconds loading duration as requested
+        // Fast duration: 800ms if already cached, 1400ms on first boot
+        const duration = isCacheHydrated ? 800 : 1400;
         splashTimer = setTimeout(() => {
-          splashEl.classList.add("fade-out");
-          splashHideTimer = setTimeout(() => {
-            splashEl.classList.add("hidden");
-          }, 550);
-        }, 2000);
+          dismissSplashScreen();
+        }, duration);
       }
 
       window.previewSplashScreen = function () {
@@ -23115,15 +23373,20 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
         }
       });
 
-      // Initialize App
+      // Initialize App with Immediate Cache Hydration & Parallel SWR Background Sync
+      hydrateCacheSync();
+      renderCurrentActiveTab();
       initSplashScreen();
       initAdminIconGrid();
-      initFirestoreListeners();
-      updateOrdersTabBadge();
-      checkInitialDeepLink();
-      loadPhotoIntoCanvas(peCurrentImageUrl);
-      updateAdminBiometricUI();
-      initSmartInstall();
+      hydrateCacheAsync().then(() => {
+        initFirestoreListeners();
+        updateOrdersTabBadge();
+        checkInitialDeepLink();
+        loadPhotoIntoCanvas(peCurrentImageUrl);
+        updateAdminBiometricUI();
+        initSmartInstall();
+        __perf.end("app_boot", "Total App Shell Boot Time");
+      });
     </script>
   </body>
 </html>
