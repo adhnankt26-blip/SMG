@@ -1849,45 +1849,81 @@
       }
 
       /* ========================================================
-       BUY NOW MODAL STYLES
+       BUY NOW MODAL STYLES (MOBILE-FIRST NATIVE BOTTOM SHEET)
        ======================================================== */
       .buy-now-modal {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         z-index: 2200;
         display: none;
         align-items: flex-end;
         justify-content: center;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       .buy-now-modal.active {
         display: flex;
       }
 
-      .buy-now-card {
-        background: #ffffff;
-        border-top-left-radius: 28px;
-        border-top-right-radius: 28px;
-        padding: 18px 18px 24px;
-        max-width: 540px;
-        width: 100%;
-        max-height: 90vh;
-        max-height: 90dvh;
-        box-sizing: border-box;
-        flex: 0 1 540px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
-        animation: slideUp 0.25s ease-out;
+      .modal-drag-indicator {
+        width: 40px;
+        height: 4.5px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        margin: 0 auto 10px;
+        display: block;
+        flex-shrink: 0;
       }
 
-      @keyframes slideUp {
+      .buy-now-card {
+        background: #ffffff;
+        border-top-left-radius: 26px;
+        border-top-right-radius: 26px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        padding: 12px 18px env(safe-area-inset-bottom, 16px);
+        max-width: 520px;
+        width: 100%;
+        max-height: 92vh;
+        max-height: 92dvh;
+        box-sizing: border-box;
+        flex: 0 1 520px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 -12px 35px rgba(0, 0, 0, 0.28);
+        animation: slideUpModal 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+      }
+
+      @media (min-width: 641px) {
+        .buy-now-modal {
+          align-items: center;
+          padding: 24px;
+        }
+        .buy-now-card {
+          border-radius: 28px;
+          max-height: 88vh;
+          max-height: 88dvh;
+          box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+          padding: 18px 22px 24px;
+        }
+        .modal-drag-indicator {
+          display: none;
+        }
+      }
+
+      @keyframes slideUpModal {
         from {
           transform: translateY(100%);
+          opacity: 0.9;
         }
         to {
           transform: translateY(0);
+          opacity: 1;
         }
       }
 
@@ -1896,7 +1932,7 @@
         align-items: center;
         justify-content: space-between;
         padding-bottom: 12px;
-        border-bottom: 1px solid #f3f4f6;
+        border-bottom: 1px solid #f1f5f9;
         flex-shrink: 0;
       }
 
@@ -1904,12 +1940,36 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
-        padding: 12px 0;
+        overflow-x: hidden;
+        padding: 10px 4px 16px 0;
+        scrollbar-width: thin;
+        scrollbar-color: #fda4af transparent;
         -webkit-overflow-scrolling: touch;
+      }
+
+      .buy-now-body::-webkit-scrollbar {
+        width: 4px;
+      }
+      .buy-now-body::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .buy-now-body::-webkit-scrollbar-thumb {
+        background: #fbcfe8;
+        border-radius: 10px;
+      }
+      .buy-now-body::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
       }
 
       .buy-now-card > div:last-child {
         flex-shrink: 0;
+      }
+
+      /* Content visibility & rendering performance boost for cake cards */
+      .cake-catalog-card,
+      .photo-item-card {
+        content-visibility: auto;
+        contain-intrinsic-size: 260px;
       }
 
       .buy-now-cake-row {
@@ -7297,7 +7357,7 @@
                       color: var(--primary);
                     "
                   ></ion-icon>
-                  Manage &amp; Rearrange Cakes (<span id="adminCakesCountText">0</span>)
+                  Manage &amp; Rearrange Cakes 
                 </span>
                 <span
                   style="
@@ -8533,6 +8593,7 @@
        ======================================================== -->
     <div class="buy-now-modal" id="buyNowModal">
       <div class="buy-now-card">
+        <div class="modal-drag-indicator"></div>
         <div class="buy-now-header">
           <div style="display: flex; align-items: center; gap: 8px">
             <ion-icon
@@ -15181,6 +15242,147 @@
           }
         });
 
+      // ========================================================
+      // PROGRESSIVE CHUNKED INFINITE SCROLL SYSTEM
+      // Renders initial 18 cards instantly; smoothly streams more on scroll
+      // ========================================================
+      const GRID_CHUNK_SIZE = 18;
+
+      let cakesCurrentFiltered = [];
+      let cakesRenderedCount = 0;
+      let cakesObserver = null;
+      let cakesSearchDebounceTimer = null;
+
+      function createSingleCakeCard(cake, index, allList) {
+        const catName =
+          cake.categoryName || getCakeCategoryName(cake.categoryId);
+        const catIcon = getCakeCategoryIcon(cake.categoryId);
+        const cakeName = cake.name || cake.title || `${catName} Cake`;
+        const smallP = cake.smallPrice || cake.price || 450;
+        const largeP =
+          cake.largePrice ||
+          (cake.smallPrice ? Math.round(cake.smallPrice * 1.75) : 800);
+        const isRecent = isRecentCake(cake);
+
+        let weightBadgesHtml = `<span class="cake-weight-badge"><ion-icon name="scale-outline" style="font-size: 10px; margin-right: 2px;"></ion-icon>0.5 Kg - 5 Kg (Custom available)</span>`;
+        let priceDisplayHtml = (cake.pricePerKg && Number(cake.pricePerKg) > 0)
+          ? `<span class="cake-card-price" style="color: #be123c;">₹${cake.pricePerKg} <span style="font-size: 11px; font-weight: 700; color: #9d174d;">/ Kg</span> <span style="font-size: 9.5px; font-weight: 800; background: #fdf2f8; color: #be123c; border: 1px solid #fbcfe8; padding: 1px 5px; border-radius: 4px; margin-left: 2px;">${cake.cakeType || 'Full Fondant'}</span></span>`
+          : `<span class="cake-card-price">₹${smallP} <span style="font-size: 11.5px; font-weight: 600; color: #9ca3af; margin: 0 1px;">/</span> ₹${largeP} <span style="font-size: 10px; font-weight: 600; color: #6b7280;">(0.5kg / 1kg)</span></span>`;
+
+        const card = document.createElement("div");
+        card.className = "cake-catalog-card";
+        card.innerHTML = `
+          <div class="cake-card-img-wrap">
+            ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
+            ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+            <button type="button" class="btn-card-download" title="Download Photo">
+              <ion-icon name="download-outline"></ion-icon>
+            </button>
+            <span class="cake-card-badge">${catIcon} ${catName}</span>
+            <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" decoding="async" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+          </div>
+          <div class="cake-card-body">
+            <div>
+              <div class="cake-card-title">${cakeName}</div>
+              ${cake.description ? `<div class="cake-card-desc">${cake.description}</div>` : ""}
+              <div class="cake-card-weights" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;">
+                ${weightBadgesHtml}
+              </div>
+              <div class="cake-card-price-row">
+                ${priceDisplayHtml}
+              </div>
+            </div>
+            <div class="cake-card-btn-row">
+              ${cake.isStockOut ? `
+                <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);">
+                  <ion-icon name="calendar-outline" style="font-size: 13px;"></ion-icon>
+                  Pre-Order for Tomorrow
+                </button>
+              ` : `
+                <button type="button" class="btn-cake-order">
+                  <ion-icon name="bag-handle" style="font-size: 13px;"></ion-icon>
+                  Order Now
+                </button>
+              `}
+              <button type="button" class="btn-cake-enquiry" title="Enquire on WhatsApp">
+                <ion-icon name="logo-whatsapp" style="font-size: 17px;"></ion-icon>
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Image tap opens Lightbox
+        card
+          .querySelector(".cake-card-img-wrap")
+          .addEventListener("click", () => {
+            openLightbox(allList, index);
+          });
+
+        // Download tap
+        card
+          .querySelector(".btn-card-download")
+          ?.addEventListener("click", (e) => {
+            e.stopPropagation();
+            downloadCakeImage(cake.uri, cakeName);
+          });
+
+        // Order Now tap opens Buy Now Modal
+        card
+          .querySelector(".btn-cake-order")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            openBuyNowModal(cake);
+          });
+
+        // Enquiry tap opens WhatsApp
+        card
+          .querySelector(".btn-cake-enquiry")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            openCakeWhatsAppEnquiry(cake);
+          });
+
+        return card;
+      }
+
+      function appendMoreCakes() {
+        const grid = document.getElementById("cakesCatalogGrid");
+        if (!grid || !cakesCurrentFiltered) return;
+
+        // Remove existing sentinel
+        const oldSentinel = document.getElementById("cakesGridSentinel");
+        if (oldSentinel) oldSentinel.remove();
+
+        const start = cakesRenderedCount;
+        const end = Math.min(start + GRID_CHUNK_SIZE, cakesCurrentFiltered.length);
+
+        for (let index = start; index < end; index++) {
+          grid.appendChild(createSingleCakeCard(cakesCurrentFiltered[index], index, cakesCurrentFiltered));
+        }
+
+        cakesRenderedCount = end;
+
+        // If more items remain, append sentinel and setup observer
+        if (cakesRenderedCount < cakesCurrentFiltered.length) {
+          const sentinel = document.createElement("div");
+          sentinel.id = "cakesGridSentinel";
+          sentinel.style.cssText = "grid-column: 1 / -1; height: 46px; display: flex; align-items: center; justify-content: center; padding: 10px 0; color: #94a3b8; font-size: 12px; font-weight: 700; gap: 6px;";
+          sentinel.innerHTML = `<ion-icon name="sparkles" class="spin-anim" style="color: var(--primary); font-size: 15px;"></ion-icon> <span>Loading more cakes...</span>`;
+          grid.appendChild(sentinel);
+
+          if ("IntersectionObserver" in window) {
+            if (!cakesObserver) {
+              cakesObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                  appendMoreCakes();
+                }
+              }, { rootMargin: "350px" });
+            }
+            cakesObserver.observe(sentinel);
+          }
+        }
+      }
+
       function renderCakesScreen() {
         const allCakesList = getAllCatalogCakes();
         const recentCakes = getRecentCakes();
@@ -15259,7 +15461,7 @@
         const recentCountEl = document.getElementById("cakesRecentCount");
         if (recentCountEl) recentCountEl.textContent = recentCakes.length;
 
-        // Render Grid
+        // Render Grid with Progressive Streaming
         const grid = document.getElementById("cakesCatalogGrid");
         if (!grid) return;
         grid.innerHTML = "";
@@ -15285,104 +15487,23 @@
           return;
         }
 
-        filtered.forEach((cake, index) => {
-          const catName =
-            cake.categoryName || getCakeCategoryName(cake.categoryId);
-          const catIcon = getCakeCategoryIcon(cake.categoryId);
-          const cakeName = cake.name || cake.title || `${catName} Cake`;
-          const smallP = cake.smallPrice || cake.price || 450;
-          const largeP =
-            cake.largePrice ||
-            (cake.smallPrice ? Math.round(cake.smallPrice * 1.75) : 800);
-          const weightOpt = cake.weightOption || "both";
-          const isRecent = isRecentCake(cake);
+        if (cakesObserver) {
+          cakesObserver.disconnect();
+          cakesObserver = null;
+        }
 
-          let weightBadgesHtml = `<span class="cake-weight-badge"><ion-icon name="scale-outline" style="font-size: 10px; margin-right: 2px;"></ion-icon>0.5 Kg - 5 Kg (Custom available)</span>`;
-          let priceDisplayHtml = (cake.pricePerKg && Number(cake.pricePerKg) > 0)
-            ? `<span class="cake-card-price" style="color: #be123c;">₹${cake.pricePerKg} <span style="font-size: 11px; font-weight: 700; color: #9d174d;">/ Kg</span> <span style="font-size: 9.5px; font-weight: 800; background: #fdf2f8; color: #be123c; border: 1px solid #fbcfe8; padding: 1px 5px; border-radius: 4px; margin-left: 2px;">${cake.cakeType || 'Full Fondant'}</span></span>`
-            : `<span class="cake-card-price">₹${smallP} <span style="font-size: 11.5px; font-weight: 600; color: #9ca3af; margin: 0 1px;">/</span> ₹${largeP} <span style="font-size: 10px; font-weight: 600; color: #6b7280;">(0.5kg / 1kg)</span></span>`;
-
-          const card = document.createElement("div");
-          card.className = "cake-catalog-card";
-          card.innerHTML = `
-            <div class="cake-card-img-wrap">
-              ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-              ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
-              <button type="button" class="btn-card-download" title="Download Photo">
-                <ion-icon name="download-outline"></ion-icon>
-              </button>
-              <span class="cake-card-badge">${catIcon} ${catName}</span>
-              <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
-            </div>
-            <div class="cake-card-body">
-              <div>
-                <div class="cake-card-title">${cakeName}</div>
-                ${cake.description ? `<div class="cake-card-desc">${cake.description}</div>` : ""}
-                <div class="cake-card-weights" style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;">
-                  ${weightBadgesHtml}
-                </div>
-                <div class="cake-card-price-row">
-                  ${priceDisplayHtml}
-                </div>
-              </div>
-              <div class="cake-card-btn-row">
-                ${cake.isStockOut ? `
-                  <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);">
-                    <ion-icon name="calendar-outline" style="font-size: 13px;"></ion-icon>
-                    Pre-Order for Tomorrow
-                  </button>
-                ` : `
-                  <button type="button" class="btn-cake-order">
-                    <ion-icon name="bag-handle" style="font-size: 13px;"></ion-icon>
-                    Order Now
-                  </button>
-                `}
-                <button type="button" class="btn-cake-enquiry" title="Enquire on WhatsApp">
-                  <ion-icon name="logo-whatsapp" style="font-size: 17px;"></ion-icon>
-                </button>
-              </div>
-            </div>
-          `;
-
-          // Image tap opens Lightbox
-          card
-            .querySelector(".cake-card-img-wrap")
-            .addEventListener("click", () => {
-              openLightbox(filtered, index);
-            });
-
-          // Download tap
-          card
-            .querySelector(".btn-card-download")
-            ?.addEventListener("click", (e) => {
-              e.stopPropagation();
-              downloadCakeImage(cake.uri, cakeName);
-            });
-
-          // Order Now tap opens Buy Now Modal
-          card
-            .querySelector(".btn-cake-order")
-            .addEventListener("click", (e) => {
-              e.stopPropagation();
-              openBuyNowModal(cake);
-            });
-
-          // Enquiry tap opens WhatsApp
-          card
-            .querySelector(".btn-cake-enquiry")
-            .addEventListener("click", (e) => {
-              e.stopPropagation();
-              openCakeWhatsAppEnquiry(cake);
-            });
-
-          grid.appendChild(card);
-        });
+        cakesCurrentFiltered = filtered;
+        cakesRenderedCount = 0;
+        appendMoreCakes();
       }
 
       document
         .getElementById("cakesSearchInput")
         ?.addEventListener("input", () => {
-          renderCakesScreen();
+          if (cakesSearchDebounceTimer) clearTimeout(cakesSearchDebounceTimer);
+          cakesSearchDebounceTimer = setTimeout(() => {
+            renderCakesScreen();
+          }, 140);
         });
 
       document
@@ -15412,12 +15533,89 @@
         ?.addEventListener("click", openPriceMenuModal);
 
       // 6. Render All Photos Gallery Screen (2-Column Grid + Filter Pills)
+      let galleryCurrentPhotos = [];
+      let galleryRenderedCount = 0;
+      let galleryObserver = null;
+
+      function createSinglePhotoCard(photo, index, allList) {
+        const cat = categories.find((c) => c.id === photo.categoryId);
+        const catName = cat ? cat.name : photo.categoryId || "Cake";
+        const catIcon = cat
+          ? getCategoryIcon(cat.icon)
+          : '<ion-icon name="folder-outline"></ion-icon>';
+        const isRecent = isRecentPhoto(photo);
+
+        const card = document.createElement("div");
+        card.className = "photo-item-card";
+        card.innerHTML = `
+          ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
+          <button type="button" class="btn-card-download" title="Download Photo">
+            <ion-icon name="download-outline"></ion-icon>
+          </button>
+          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
+          <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async">
+          <div class="photo-overlay-tag">
+            <span class="photo-tag-icon">${catIcon}</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${catName}</span>
+          </div>
+        `;
+
+        card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          downloadCakeImage(photo.uri, catName);
+        });
+
+        card.addEventListener("click", () => {
+          openLightbox(allList, index);
+        });
+
+        return card;
+      }
+
+      function appendMoreGallery() {
+        const grid = document.getElementById("allPhotosGrid");
+        if (!grid || !galleryCurrentPhotos) return;
+
+        const oldSentinel = document.getElementById("galleryGridSentinel");
+        if (oldSentinel) oldSentinel.remove();
+
+        const start = galleryRenderedCount;
+        const end = Math.min(start + GRID_CHUNK_SIZE, galleryCurrentPhotos.length);
+
+        for (let i = start; i < end; i++) {
+          grid.appendChild(createSinglePhotoCard(galleryCurrentPhotos[i], i, galleryCurrentPhotos));
+        }
+
+        galleryRenderedCount = end;
+
+        if (galleryRenderedCount < galleryCurrentPhotos.length) {
+          const sentinel = document.createElement("div");
+          sentinel.id = "galleryGridSentinel";
+          sentinel.style.cssText = "grid-column: 1 / -1; height: 46px; display: flex; align-items: center; justify-content: center; padding: 10px 0; color: #94a3b8; font-size: 12px; font-weight: 700; gap: 6px;";
+          sentinel.innerHTML = `<ion-icon name="sparkles" class="spin-anim" style="color: var(--primary); font-size: 15px;"></ion-icon> <span>Loading more cake designs...</span>`;
+          grid.appendChild(sentinel);
+
+          if ("IntersectionObserver" in window) {
+            if (!galleryObserver) {
+              galleryObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                  appendMoreGallery();
+                }
+              }, { rootMargin: "350px" });
+            }
+            galleryObserver.observe(sentinel);
+          }
+        }
+      }
+
       function renderGalleryScreen() {
+        const pillsBar = document.getElementById("pillsBar");
         const recents = getRecentPhotos();
-        const pillsBar = document.getElementById("galleryPillsBar");
+
+        // Render Pills
         pillsBar.innerHTML = `
         <button class="filter-pill ${activeCategory === "all" ? "active" : ""}" data-cat="all">
-          <ion-icon name="apps-outline" style="font-size: 13px; margin-right: 3px;"></ion-icon> All (${allPhotos.length})
+          <ion-icon name="apps-outline" style="font-size: 13px; margin-right: 3px;"></ion-icon> All (<span id="allPillCount">${allPhotos.length}</span>)
         </button>
         <button class="filter-pill recent-pill ${activeCategory === "recent" ? "active" : ""}" data-cat="recent">
           <ion-icon name="flash" style="font-size: 13px; margin-right: 3px;"></ion-icon> Recent (${recents.length})
@@ -15548,40 +15746,86 @@
           return;
         }
 
-        photosToDisplay.forEach((photo, index) => {
-          const cat = categories.find((c) => c.id === photo.categoryId);
-          const catName = cat ? cat.name : photo.categoryId || "Cake";
-          const catIcon = cat
-            ? getCategoryIcon(cat.icon)
-            : '<ion-icon name="folder-outline"></ion-icon>';
-          const isRecent = isRecentPhoto(photo);
+        if (galleryObserver) {
+          galleryObserver.disconnect();
+          galleryObserver = null;
+        }
 
-          const card = document.createElement("div");
-          card.className = "photo-item-card";
-          card.innerHTML = `
+        galleryCurrentPhotos = photosToDisplay;
+        galleryRenderedCount = 0;
+        appendMoreGallery();
+      }
+
+      // 7. Category Detail View (category/[id].tsx replica)
+      let catDetailCurrentPhotos = [];
+      let catDetailRenderedCount = 0;
+      let catDetailObserver = null;
+      let currentDetailCategoryObj = null;
+
+      function createSingleCategoryDetailCard(photo, index, allList, cat) {
+        const isRecent = isRecentPhoto(photo);
+        const card = document.createElement("div");
+        card.className = "photo-item-card";
+        card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
+          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
-          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
-          <img src="${photo.uri}" alt="${catName}" loading="lazy">
+          <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
-            <span class="photo-tag-icon">${catIcon}</span>
-            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${catName}</span>
+            <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
           </div>
         `;
 
-          card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
-            e.stopPropagation();
-            downloadCakeImage(photo.uri, catName);
-          });
-
-          card.addEventListener("click", () => {
-            openLightbox(photosToDisplay, index);
-          });
-
-          grid.appendChild(card);
+        card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          downloadCakeImage(photo.uri, cat.name);
         });
+
+        card.addEventListener("click", () => {
+          openLightbox(allList, index);
+        });
+
+        return card;
+      }
+
+      function appendMoreCategoryDetail() {
+        const grid = document.getElementById("categoryDetailPhotosGrid");
+        if (!grid || !catDetailCurrentPhotos || !currentDetailCategoryObj) return;
+
+        const oldSentinel = document.getElementById("catDetailGridSentinel");
+        if (oldSentinel) oldSentinel.remove();
+
+        const start = catDetailRenderedCount;
+        const end = Math.min(start + GRID_CHUNK_SIZE, catDetailCurrentPhotos.length);
+
+        for (let i = start; i < end; i++) {
+          grid.appendChild(createSingleCategoryDetailCard(catDetailCurrentPhotos[i], i, catDetailCurrentPhotos, currentDetailCategoryObj));
+        }
+
+        catDetailRenderedCount = end;
+
+        if (catDetailRenderedCount < catDetailCurrentPhotos.length) {
+          const sentinel = document.createElement("div");
+          sentinel.id = "catDetailGridSentinel";
+          sentinel.style.cssText = "grid-column: 1 / -1; height: 46px; display: flex; align-items: center; justify-content: center; padding: 10px 0; color: #94a3b8; font-size: 12px; font-weight: 700; gap: 6px;";
+          sentinel.innerHTML = `<ion-icon name="sparkles" class="spin-anim" style="color: var(--primary); font-size: 15px;"></ion-icon> <span>Loading more photos...</span>`;
+          grid.appendChild(sentinel);
+
+          if ("IntersectionObserver" in window) {
+            if (!catDetailObserver) {
+              catDetailObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                  appendMoreCategoryDetail();
+                }
+              }, { rootMargin: "350px" });
+            }
+            catDetailObserver.observe(sentinel);
+          }
+        }
       }
 
       // 7. Category Detail View (category/[id].tsx replica)
@@ -15592,6 +15836,7 @@
       }
 
       function renderCategoryDetailScreen(cat) {
+        currentDetailCategoryObj = cat;
         const catPhotos = allPhotos.filter((p) => p.categoryId === cat.id);
         document.getElementById("detailCatTitle").textContent = cat.name;
         document.getElementById("detailCatSubtitle").textContent =
@@ -15600,36 +15845,29 @@
         const grid = document.getElementById("categoryDetailPhotosGrid");
         grid.innerHTML = "";
 
-        catPhotos.forEach((photo, index) => {
-          const isRecent = isRecentPhoto(photo);
-          const card = document.createElement("div");
-          card.className = "photo-item-card";
-          card.innerHTML = `
-          ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
-          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
-          <button type="button" class="btn-card-download" title="Download Photo">
-            <ion-icon name="download-outline"></ion-icon>
-          </button>
-          <img src="${photo.uri}" alt="${cat.name}" loading="lazy" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
-          <div class="photo-overlay-tag">
-            <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
-            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
-          </div>
-        `;
+        if (catDetailObserver) {
+          catDetailObserver.disconnect();
+          catDetailObserver = null;
+        }
 
-          card.querySelector(".btn-card-download")?.addEventListener("click", (e) => {
-            e.stopPropagation();
-            downloadCakeImage(photo.uri, cat.name);
-          });
-
-          card.addEventListener("click", () => {
-            openLightbox(catPhotos, index);
-          });
-
-          grid.appendChild(card);
-        });
+        catDetailCurrentPhotos = catPhotos;
+        catDetailRenderedCount = 0;
+        appendMoreCategoryDetail();
       }
+
+      // Global passive scroll stream fallback (works across all browsers)
+      window.addEventListener("scroll", () => {
+        if ((window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 500)) {
+          const activeScreen = document.querySelector(".screen-view.active")?.id;
+          if (activeScreen === "screenCakes" && cakesRenderedCount < cakesCurrentFiltered.length) {
+            appendMoreCakes();
+          } else if (activeScreen === "screenGallery" && galleryRenderedCount < galleryCurrentPhotos.length) {
+            appendMoreGallery();
+          } else if (activeScreen === "screenCategoryDetail" && catDetailRenderedCount < catDetailCurrentPhotos.length) {
+            appendMoreCategoryDetail();
+          }
+        }
+      }, { passive: true });
 
       // 8. Lightbox Preview Modal (image-lightbox.tsx replica)
       // Universal Cross-Device Photo Download
@@ -16900,7 +17138,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=19').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=20').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
