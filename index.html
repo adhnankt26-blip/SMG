@@ -66,8 +66,10 @@
       rel="stylesheet"
     />
 
-    <!-- Preload Splash Screen Image -->
-    <link rel="preload" as="image" href="splash.jpg" />
+    <!-- Preload Splash Screen Image & Branding Assets -->
+    <link rel="preload" as="image" href="splash-logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="splash-logo.png" />
+    <link rel="apple-touch-icon" href="splash-logo.png" />
 
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
@@ -3532,7 +3534,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px;
+        padding: max(16px, env(safe-area-inset-top, 16px)) 16px max(16px, env(safe-area-inset-bottom, 16px)) 16px;
+        min-height: 100dvh;
+        height: 100%;
         box-sizing: border-box;
         opacity: 1;
         transform: scale(1);
@@ -3618,22 +3622,23 @@
       }
 
       .splash-logo-card {
-        width: 210px;
-        height: 210px;
-        max-width: 65vw;
-        max-height: 65vw;
-        background: #ffffff;
-        border-radius: 36px;
-        padding: 10px;
+        width: min(210px, 56vw);
+        height: min(210px, 56vw);
+        aspect-ratio: 1 / 1;
+        background: #fffdfa;
+        border-radius: clamp(24px, 6vw, 32px);
+        padding: 0;
+        overflow: hidden;
         box-shadow:
-          0 20px 45px -10px rgba(180, 83, 9, 0.22),
-          0 8px 20px -6px rgba(225, 29, 72, 0.15),
+          0 18px 42px -8px rgba(180, 83, 9, 0.22),
+          0 8px 18px -4px rgba(225, 29, 72, 0.12),
           0 0 0 2px rgba(251, 146, 60, 0.25);
         display: flex;
         align-items: center;
         justify-content: center;
         animation: splashPulseBadge 2.2s ease-in-out infinite;
         position: relative;
+        flex-shrink: 0;
       }
 
       @keyframes splashPulseBadge {
@@ -3641,16 +3646,16 @@
         100% {
           transform: translateY(0) scale(1);
           box-shadow:
-            0 20px 45px -10px rgba(180, 83, 9, 0.22),
-            0 8px 20px -6px rgba(225, 29, 72, 0.15),
+            0 18px 42px -8px rgba(180, 83, 9, 0.22),
+            0 8px 18px -4px rgba(225, 29, 72, 0.12),
             0 0 0 2px rgba(251, 146, 60, 0.25);
         }
         50% {
           transform: translateY(-4px) scale(1.02);
           box-shadow:
-            0 26px 55px -10px rgba(180, 83, 9, 0.28),
-            0 12px 26px -6px rgba(225, 29, 72, 0.2),
-            0 0 0 3px rgba(251, 146, 60, 0.4);
+            0 24px 50px -8px rgba(180, 83, 9, 0.28),
+            0 12px 24px -4px rgba(225, 29, 72, 0.18),
+            0 0 0 3px rgba(251, 146, 60, 0.38);
         }
       }
 
@@ -3658,8 +3663,78 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: 28px;
+        border-radius: clamp(24px, 6vw, 32px);
         display: block;
+      }
+
+      @media (max-width: 480px) {
+        .app-splash-screen {
+          padding: max(12px, env(safe-area-inset-top, 12px)) 12px max(12px, env(safe-area-inset-bottom, 12px)) 12px;
+        }
+        .splash-content-container {
+          max-width: 330px;
+        }
+        .splash-logo-card {
+          width: min(185px, 52vw);
+          height: min(185px, 52vw);
+          border-radius: 26px;
+        }
+        .splash-logo-img {
+          border-radius: 26px;
+        }
+        .splash-text-block {
+          margin-top: 14px;
+          margin-bottom: 16px;
+        }
+        .splash-brand-title {
+          font-size: 23px;
+        }
+        .splash-tagline {
+          font-size: 12px;
+        }
+        .splash-loading-wrapper {
+          max-width: 220px;
+          gap: 7px;
+        }
+        .splash-progress-track {
+          height: 6px;
+        }
+        .splash-loading-status {
+          font-size: 11px;
+        }
+        .splash-footer-badge {
+          margin-top: 18px;
+          font-size: 10.5px;
+          padding: 5px 12px;
+          max-width: 90vw;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      @media (max-height: 680px) {
+        .splash-logo-card {
+          width: 145px;
+          height: 145px;
+          border-radius: 22px;
+        }
+        .splash-logo-img {
+          border-radius: 22px;
+        }
+        .splash-text-block {
+          margin-top: 10px;
+          margin-bottom: 12px;
+        }
+        .splash-brand-title {
+          font-size: 20px;
+        }
+        .splash-tagline {
+          font-size: 11.5px;
+        }
+        .splash-footer-badge {
+          margin-top: 12px;
+        }
       }
 
       .splash-text-block {
@@ -4961,13 +5036,13 @@
             <span style="font-size: 15px; font-weight: 800; color: #9a3412; margin-top: 6px; letter-spacing: 0.5px;">Cake Studio</span>
           </div>
           <img
-            src="icon.png"
-            onload="this.style.opacity = '1';"
-            onerror="this.style.display = 'none';"
+            src="splash-logo.png"
+            onload="this.style.opacity = '1'; var fb = document.getElementById('splashLogoFallback'); if (fb) fb.style.display = 'none';"
+            onerror="this.src='splash.jpg';"
             alt="Cake Studio"
             class="splash-logo-img"
             id="splashLogoImg"
-            style="position: relative; z-index: 1; opacity: 0; transition: opacity 0.3s ease;"
+            style="position: relative; z-index: 1; opacity: 1; transition: opacity 0.25s ease;"
           />
         </div>
 
@@ -10740,7 +10815,7 @@
           </button>
         </div>
         <div style="width: 64px; height: 64px; border-radius: 18px; background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: 0 4px 14px rgba(225, 29, 72, 0.15);">
-          <img src="icon.png" onerror="this.src='splash.jpg'" alt="Cake Studio" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover;">
+          <img src="splash-logo.png" onerror="this.src='splash.jpg'" alt="Cake Studio" style="width: 44px; height: 44px; border-radius: 12px; object-fit: cover;">
         </div>
         <h3 id="installModalTitle" style="font-size: 18px; font-weight: 800; color: #111827; margin-bottom: 6px;">Install Cake Studio</h3>
         <p id="installModalDesc" style="font-size: 12.5px; color: #6b7280; line-height: 1.5; margin-bottom: 18px;">
@@ -17822,7 +17897,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=25').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=26').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);

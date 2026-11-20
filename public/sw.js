@@ -1,10 +1,12 @@
-// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v28 (Ultra-Fast Image & Asset Caching)
-const CACHE_NAME = 'studio-cake-v28';
+// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v29 (Cake Studio Artwork & Mobile Optimizations)
+const CACHE_NAME = 'studio-cake-v29';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/splash-logo.png',
+  '/splash.jpg',
   '/icon.png',
   '/icon-192.png',
   '/icon-512.png',
