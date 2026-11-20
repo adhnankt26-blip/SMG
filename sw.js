@@ -1,5 +1,5 @@
-// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v29 (Cake Studio Artwork & Mobile Optimizations)
-const CACHE_NAME = 'studio-cake-v29';
+// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v30 (Mobile Responsive Scaling & Breakpoints Overhaul)
+const CACHE_NAME = 'studio-cake-v30';
 
 const PRECACHE_ASSETS = [
   '/',

@@ -2,10 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cake Studio</title>
     <meta
       name="description"
@@ -106,7 +103,9 @@
         --whatsapp-hover: #1ebe5b;
       }
 
-      * {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -120,21 +119,31 @@
 
       html,
       body {
+        width: 100%;
+        max-width: 100vw;
+        min-height: 100%;
         height: 100%;
         background-color: var(--bg-cream);
         color: var(--text-dark);
         overflow-x: hidden;
+        position: relative;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
 
       #app {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        width: 100%;
         max-width: 680px;
+        min-height: 100%;
+        height: 100%;
+        height: 100dvh;
         margin: 0 auto;
         background: #ffffff;
         box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
         position: relative;
+        overflow-x: hidden;
       }
 
       /* Screen Views */
@@ -142,13 +151,25 @@
         display: none;
         flex: 1;
         flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
         overflow-y: auto;
-        padding-bottom: 84px; /* Space for bottom tab bar */
+        padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
         -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
       }
 
       .screen-view.active {
         display: flex;
+      }
+
+      /* Responsive Media Elements & Scale Protection */
+      img,
+      svg,
+      video,
+      canvas {
+        max-width: 100%;
       }
 
       /* ========================================================
@@ -163,27 +184,45 @@
         align-items: center;
         justify-content: space-between;
         padding: 16px 20px 8px;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .header-text-group {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
       }
 
       .cat-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 800;
         color: var(--text-dark);
         letter-spacing: -0.5px;
-        line-height: 1.1;
+        line-height: 1.15;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
       }
 
       .cat-subtitle {
-        font-size: 14px;
+        font-size: 13px;
         color: var(--text-gray);
         font-weight: 600;
         margin-top: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
       }
 
       .header-actions-row {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex: 0 0 auto;
       }
 
       .btn-round {
@@ -411,7 +450,7 @@
       /* Category 2-Column Grid (oru linil randu image mathram) */
       .cat-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
         padding: 0 16px 24px;
       }
@@ -1746,14 +1785,27 @@
         font-size: 19px;
       }
 
-      @media (max-width: 370px) {
+      @media (max-width: 600px) {
         .btn-lb-action {
           font-size: 12px;
           padding: 0 8px;
           gap: 4px;
+          min-width: 0;
+          white-space: nowrap;
         }
         .btn-lb-action ion-icon {
           font-size: 16px;
+          flex-shrink: 0;
+        }
+      }
+      @media (max-width: 360px) {
+        .btn-lb-action {
+          font-size: 11px;
+          padding: 0 5px;
+          gap: 3px;
+        }
+        .btn-lb-action ion-icon {
+          font-size: 14px;
         }
       }
 
@@ -4104,69 +4156,116 @@
         outline-offset: 3px;
       }
 
-      @media (max-width: 380px) {
-        .cat-header {
+      @media (max-width: 600px) {
+        .cat-header,
+        .gallery-header,
+        .detail-header,
+        .admin-header {
           gap: 8px;
-          padding: 14px 12px 8px;
+          padding: 12px 14px 6px;
         }
 
         .header-text-group {
           min-width: 0;
+          flex: 1 1 auto;
         }
 
-        .cat-title {
-          font-size: 23px;
+        .cat-title,
+        .gallery-title,
+        .detail-title {
+          font-size: clamp(20px, 5.2vw, 24px);
         }
 
-        .cat-subtitle {
-          font-size: 12px;
+        .cat-subtitle,
+        .gallery-subtitle {
+          font-size: 11.5px;
         }
 
         .header-actions-row {
-          gap: 5px;
+          gap: 6px;
+          flex-shrink: 0;
         }
 
         .btn-round {
-          width: 36px;
-          height: 36px;
-          border-radius: 18px;
+          width: 38px;
+          height: 38px;
+          min-width: 38px;
+          border-radius: 19px;
         }
 
         .btn-pill-menu {
-          height: 36px;
-          padding: 0 9px;
+          height: 38px;
+          padding: 0 10px;
           font-size: 12px;
+          white-space: nowrap;
         }
 
         .search-wrapper {
-          padding-right: 12px;
-          padding-left: 12px;
+          padding: 8px 14px 10px;
         }
 
         .view-all-banner {
-          margin-right: 12px;
-          margin-left: 12px;
+          margin: 4px 14px 12px;
+        }
+
+        #recentPhotosQuickBox {
+          margin: 0 14px 14px !important;
         }
 
         .cat-grid,
         .cakes-catalog-grid,
         .photo-grid {
-          gap: 9px;
-          padding-right: 12px;
-          padding-left: 12px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          padding: 0 14px 24px;
         }
 
         .tab-label {
-          font-size: 9px;
+          font-size: 9.5px;
         }
 
         #smartInstallBanner {
-          padding-right: 10px !important;
-          padding-left: 10px !important;
+          padding: 8px 12px !important;
         }
 
         #smartInstallBannerSub {
           display: none;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .cat-header,
+        .gallery-header,
+        .detail-header,
+        .admin-header {
+          padding: 10px 10px 4px;
+          gap: 5px;
+        }
+
+        .cat-title,
+        .gallery-title,
+        .detail-title {
+          font-size: 19px;
+        }
+
+        .btn-round {
+          width: 34px;
+          height: 34px;
+          min-width: 34px;
+          border-radius: 17px;
+        }
+
+        .btn-pill-menu {
+          height: 34px;
+          padding: 0 8px;
+          font-size: 11px;
+        }
+
+        .cat-grid,
+        .cakes-catalog-grid,
+        .photo-grid {
+          gap: 8px;
+          padding: 0 10px 20px;
         }
       }
 
@@ -4540,7 +4639,7 @@
         box-shadow: none;
       }
 
-      @media (max-width: 380px) {
+      @media (max-width: 600px) {
         #buyNowCakeShapeSection {
           padding: 11px;
           border-radius: 16px;
@@ -4656,10 +4755,10 @@
         }
       }
 
-      @media (max-width: 380px) {
+      @media (max-width: 600px) {
         #cakesPillsBar,
         #galleryPillsBar {
-          min-height: 56px;
+          min-height: 52px;
           gap: 8px;
           padding: 8px 12px;
         }
@@ -4669,7 +4768,7 @@
           min-height: 38px;
           gap: 6px;
           padding: 0 12px;
-          font-size: 11px;
+          font-size: 11.5px;
         }
 
         #cakesPillsBar .filter-pill ion-icon,
@@ -4761,17 +4860,17 @@
         }
       }
 
-      @media (max-width: 380px) {
+      @media (max-width: 600px) {
         .cake-shape-options {
-          gap: 7px !important;
+          gap: 6px !important;
           padding: 6px;
         }
 
         #buyNowModal .cake-shape-options .cake-shape-chip {
-          min-height: 44px;
-          padding-right: 5px;
-          padding-left: 5px;
-          gap: 5px;
+          min-height: 42px;
+          padding-right: 4px;
+          padding-left: 4px;
+          gap: 4px;
           font-size: 11px;
         }
 
@@ -5038,7 +5137,7 @@
           <img
             src="splash-logo.png"
             onload="this.style.opacity = '1'; var fb = document.getElementById('splashLogoFallback'); if (fb) fb.style.display = 'none';"
-            onerror="this.src='splash.jpg';"
+            onerror="if (!this.dataset.triedFallback) { this.dataset.triedFallback = '1'; this.src = 'splash.jpg'; } else { this.style.display = 'none'; var fb = document.getElementById('splashLogoFallback'); if (fb) fb.style.display = 'flex'; }"
             alt="Cake Studio"
             class="splash-logo-img"
             id="splashLogoImg"
@@ -15849,9 +15948,11 @@
         card.className = "cake-catalog-card";
         card.innerHTML = `
           <div class="cake-card-img-wrap">
-            ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-            ${isItemCurrentlyStockOut(cake) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
-            <button type="button" class="btn-card-download" title="Download Photo">
+            <div class="card-badges-top-left" style="position: absolute; top: 7px; left: 7px; right: ${isItemCurrentlyStockOut(cake) ? '82px' : '44px'}; display: flex; flex-direction: column; gap: 3px; pointer-events: none; z-index: 5;">
+              ${isRecent ? '<span class="recent-badge" style="position: static; font-size: 9.5px; padding: 2px 6px; border-radius: 5px; width: fit-content; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"><ion-icon name="flash" style="font-size: 9px; margin-right: 1px;"></ion-icon> Recent</span>' : ''}
+            </div>
+            ${isItemCurrentlyStockOut(cake) ? '<div style="position: absolute; top: 7px; right: 42px; z-index: 5; pointer-events: none;"><span style="background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap;">Stock Out</span></div>' : ''}
+            <button type="button" class="btn-card-download" title="Download Photo" style="top: 7px; right: 7px;">
               <ion-icon name="download-outline"></ion-icon>
             </button>
             <span class="cake-card-badge">${catIcon} ${catName}</span>
@@ -15870,17 +15971,17 @@
             </div>
             <div class="cake-card-btn-row">
               ${isItemCurrentlyStockOut(cake) ? `
-                <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);">
-                  <ion-icon name="calendar-outline" style="font-size: 13px;"></ion-icon>
-                  Pre-Order for Tomorrow
+                <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <ion-icon name="calendar-outline" style="font-size: 13px; flex-shrink: 0;"></ion-icon>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Pre-Order</span>
                 </button>
               ` : `
-                <button type="button" class="btn-cake-order">
-                  <ion-icon name="bag-handle" style="font-size: 13px;"></ion-icon>
-                  Order Now
+                <button type="button" class="btn-cake-order" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <ion-icon name="bag-handle" style="font-size: 13px; flex-shrink: 0;"></ion-icon>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Order Now</span>
                 </button>
               `}
-              <button type="button" class="btn-cake-enquiry" title="Enquire on WhatsApp">
+              <button type="button" class="btn-cake-enquiry" title="Enquire on WhatsApp" style="flex-shrink: 0;">
                 <ion-icon name="logo-whatsapp" style="font-size: 17px;"></ion-icon>
               </button>
             </div>
@@ -16134,12 +16235,14 @@
         const card = document.createElement("div");
         card.className = "photo-item-card";
         card.innerHTML = `
-          ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          <button type="button" class="btn-card-download" title="Download Photo">
+          <div class="card-badges-top-left" style="position: absolute; top: 7px; left: 7px; right: ${isItemCurrentlyStockOut(photo) ? '82px' : '44px'}; display: flex; flex-direction: column; gap: 3px; pointer-events: none; z-index: 5;">
+            ${isRecent ? '<span class="recent-badge" style="position: static; font-size: 9.5px; padding: 2px 6px; border-radius: 5px; width: fit-content; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"><ion-icon name="flash" style="font-size: 9px; margin-right: 1px;"></ion-icon> Recent</span>' : ''}
+            ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="background: rgba(190, 18, 60, 0.94); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 5px; width: fit-content; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg</span>` : ''}
+          </div>
+          ${isItemCurrentlyStockOut(photo) ? '<div style="position: absolute; top: 7px; right: 42px; z-index: 5; pointer-events: none;"><span style="background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap;">Stock Out</span></div>' : ''}
+          <button type="button" class="btn-card-download" title="Download Photo" style="top: 7px; right: 7px;">
             <ion-icon name="download-outline"></ion-icon>
           </button>
-          ${isItemCurrentlyStockOut(photo) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
-          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
           <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${isItemCurrentlyStockOut(photo) ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${catIcon}</span>
@@ -16366,10 +16469,12 @@
         const card = document.createElement("div");
         card.className = "photo-item-card";
         card.innerHTML = `
-          ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          ${isItemCurrentlyStockOut(photo) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
-          ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
-          <button type="button" class="btn-card-download" title="Download Photo">
+          <div class="card-badges-top-left" style="position: absolute; top: 7px; left: 7px; right: ${isItemCurrentlyStockOut(photo) ? '82px' : '44px'}; display: flex; flex-direction: column; gap: 3px; pointer-events: none; z-index: 5;">
+            ${isRecent ? '<span class="recent-badge" style="position: static; font-size: 9.5px; padding: 2px 6px; border-radius: 5px; width: fit-content; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-flex; align-items: center; gap: 3px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);"><ion-icon name="flash" style="font-size: 9px; margin-right: 1px;"></ion-icon> Recent</span>' : ''}
+            ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="background: rgba(190, 18, 60, 0.94); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 5px; width: fit-content; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg</span>` : ''}
+          </div>
+          ${isItemCurrentlyStockOut(photo) ? '<div style="position: absolute; top: 7px; right: 42px; z-index: 5; pointer-events: none;"><span style="background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap;">Stock Out</span></div>' : ''}
+          <button type="button" class="btn-card-download" title="Download Photo" style="top: 7px; right: 7px;">
             <ion-icon name="download-outline"></ion-icon>
           </button>
           <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${isItemCurrentlyStockOut(photo) ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
@@ -17897,7 +18002,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=26').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=30').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
