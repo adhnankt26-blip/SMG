@@ -1,8 +1,24 @@
-// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v27 (Ultra-Fast Image & Asset Caching)
-const CACHE_NAME = 'studio-cake-v27';
+// Service Worker for Studio Cake Image PWA (Desktop & Mobile) - v28 (Ultra-Fast Image & Asset Caching)
+const CACHE_NAME = 'studio-cake-v28';
+
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon.png',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.png'
+];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+        console.warn('[SW] Precache non-critical warning:', err);
+      });
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -38,7 +54,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((response) => {
-          if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
+          if (response && (response.status === 200 || response.type === 'opaque')) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }

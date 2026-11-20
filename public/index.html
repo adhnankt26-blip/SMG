@@ -25,7 +25,7 @@
 
     <!-- Google Fonts -->
         <!-- PWA Web App Manifest & Mobile Meta -->
-    <link rel="manifest" href="manifest.json?v=6" />
+    <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/png" sizes="1024x1024" href="icon.png?v=5" />
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=5" />
     <link rel="shortcut icon" href="favicon.ico?v=5" />
@@ -39,8 +39,23 @@
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         window.deferredInstallPrompt = e;
+        console.log('[PWA] beforeinstallprompt captured successfully');
         if (typeof window.updateInstallButtonsUI === 'function') {
           window.updateInstallButtonsUI();
+        }
+      });
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App successfully installed!');
+        window.deferredInstallPrompt = null;
+        try { localStorage.setItem('cs_app_installed', 'true'); } catch(err){}
+        if (typeof window.updateInstallButtonsUI === 'function') {
+          window.updateInstallButtonsUI();
+        }
+        if (typeof window.closeSmartInstallModal === 'function') {
+          window.closeSmartInstallModal();
+        }
+        if (typeof window.showToast === 'function') {
+          window.showToast('🎉 Cake Studio installed successfully!');
         }
       });
     </script>
@@ -4946,13 +4961,13 @@
             <span style="font-size: 15px; font-weight: 800; color: #9a3412; margin-top: 6px; letter-spacing: 0.5px;">Cake Studio</span>
           </div>
           <img
-            src="splash.jpg"
-            onload="var fb = document.getElementById('splashLogoFallback'); if (fb) fb.style.display = 'none';"
+            src="icon.png"
+            onload="this.style.opacity = '1';"
             onerror="this.style.display = 'none';"
             alt="Cake Studio"
             class="splash-logo-img"
             id="splashLogoImg"
-            style="position: relative; z-index: 1;"
+            style="position: relative; z-index: 1; opacity: 0; transition: opacity 0.3s ease;"
           />
         </div>
 
@@ -13535,6 +13550,102 @@
         if (el) el.value = val;
       }
 
+      // ========================================================
+      // TIME-AWARE AUTO STOCK-IN SYSTEM (10:00 AM IST NEXT DAY)
+      // Indian Standard Time is UTC + 5.5 hours (19,800,000 ms)
+      // ========================================================
+      const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+      /**
+       * Calculates the timestamp (ms) of the next 10:00 AM Indian Standard Time (IST).
+       * When marked stock out, this sets the automatic Stock In restoration boundary.
+       */
+      function getTomorrow10AmIstTimestamp(fromMs = Date.now()) {
+        const istDate = new Date(fromMs + IST_OFFSET_MS);
+        const y = istDate.getUTCFullYear();
+        const m = istDate.getUTCMonth();
+        const d = istDate.getUTCDate() + 1; // Tomorrow in IST
+        // 10:00:00 AM IST = 04:30:00 AM UTC
+        return Date.UTC(y, m, d, 4, 30, 0, 0);
+      }
+
+      /**
+       * Determines if an item is currently Stock Out.
+       * If tomorrow 10:00 AM IST has arrived or passed, automatically returns false (Stock In)
+       * so customers can immediately buy/order the cake!
+       */
+      function isItemCurrentlyStockOut(item) {
+        if (!item || !item.isStockOut) return false;
+        const now = Date.now();
+
+        // 1. Explicit auto-in timestamp stored in Firestore doc
+        if (item.stockAutoInTimestamp && Number(item.stockAutoInTimestamp) > 0) {
+          if (now >= Number(item.stockAutoInTimestamp)) {
+            item.isStockOut = false; // Auto restore in-memory
+            return false;
+          }
+          return true;
+        }
+
+        // 2. Based on stockOutTime, updatedAt or timestamp
+        const markedTime = item.stockOutTime || item.updatedAt || item.timestamp;
+        if (markedTime && Number(markedTime) > 0) {
+          const autoInTime = getTomorrow10AmIstTimestamp(Number(markedTime));
+          if (now >= autoInTime) {
+            item.isStockOut = false; // Auto restore in-memory
+            return false;
+          }
+          return true;
+        }
+
+        // 3. Fallback: check against today's 10:00 AM IST if marked in an earlier session
+        const istNow = new Date(now + IST_OFFSET_MS);
+        const today10AmUtc = Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 4, 30, 0, 0);
+        if (now >= today10AmUtc && item.stockOutTime && Number(item.stockOutTime) < today10AmUtc) {
+          item.isStockOut = false;
+          return false;
+        }
+
+        return Boolean(item.isStockOut);
+      }
+
+      /**
+       * Sweeper that automatically checks catalog cakes and photos.
+       * If 10:00 AM IST has passed, restores them to Stock In and updates Firestore in background.
+       */
+      function runStockOutAutoSweep() {
+        let changed = false;
+        if (Array.isArray(catalogCakes)) {
+          catalogCakes.forEach((cake) => {
+            if (cake && cake.isStockOut && !isItemCurrentlyStockOut(cake)) {
+              cake.isStockOut = false;
+              cake.stockAutoInTimestamp = null;
+              changed = true;
+              try {
+                db.collection("cakes").doc(cake.id).set({ isStockOut: false, stockAutoInTimestamp: null }, { merge: true });
+              } catch (e) {}
+            }
+          });
+        }
+        if (Array.isArray(allPhotos)) {
+          allPhotos.forEach((photo) => {
+            if (photo && photo.isStockOut && !isItemCurrentlyStockOut(photo)) {
+              photo.isStockOut = false;
+              photo.stockAutoInTimestamp = null;
+              changed = true;
+              try {
+                db.collection("photos").doc(photo.id).set({ isStockOut: false, stockAutoInTimestamp: null }, { merge: true });
+              } catch (e) {}
+            }
+          });
+        }
+        if (changed) {
+          console.log("[StockOut] 10:00 AM IST reached - Out-of-Stock items auto-restored to Stock In!");
+          if (typeof renderCurrentActiveTab === "function") renderCurrentActiveTab();
+        }
+      }
+      setInterval(runStockOutAutoSweep, 60000); // Check every minute
+
       function getTomorrowDateString() {
         const now = new Date();
         const tom = new Date(now);
@@ -13554,7 +13665,7 @@
       }
 
       function validateStockOutDeliverySlot(photo, delivDate, delivTime, isPhotoCakeActive = false) {
-        if (!photo || !photo.isStockOut) {
+        if (!photo || !isItemCurrentlyStockOut(photo)) {
           return { isValid: true, isStockOut: false, isTomorrow: false, isFuture: false, isSameDayRush: false, errorMsg: "", buttonText: "" };
         }
         const todayStr = getTodayDateString();
@@ -13643,7 +13754,7 @@
       function getPhotoCakePricing(delivDate, delivTime, isStockOutCake = null) {
         const isStockOut = (isStockOutCake !== null)
           ? Boolean(isStockOutCake)
-          : Boolean(typeof buyNowTargetPhoto !== "undefined" && buyNowTargetPhoto && buyNowTargetPhoto.isStockOut);
+          : Boolean(typeof buyNowTargetPhoto !== "undefined" && isItemCurrentlyStockOut(buyNowTargetPhoto));
 
         const now = new Date();
         const currentHour = now.getHours();
@@ -14189,7 +14300,7 @@
 
           const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
           const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-          const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+          const pricing = getPhotoCakePricing(custDate, custTime, isItemCurrentlyStockOut(buyNowTargetPhoto));
 
           if (pricing.isRush && !lastShownRushState) {
             lastShownRushState = true;
@@ -14205,7 +14316,7 @@
           if (isBuyNowPhotoCakeActive) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-            const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            const pricing = getPhotoCakePricing(custDate, custTime, isItemCurrentlyStockOut(buyNowTargetPhoto));
             if (pricing.isRush && !lastShownRushState) {
               lastShownRushState = true;
               showPhotoRushAlert(pricing);
@@ -14220,7 +14331,7 @@
           if (isBuyNowPhotoCakeActive) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
-            const pricing = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            const pricing = getPhotoCakePricing(custDate, custTime, isItemCurrentlyStockOut(buyNowTargetPhoto));
             if (pricing.isRush && !lastShownRushState) {
               lastShownRushState = true;
               showPhotoRushAlert(pricing);
@@ -15664,12 +15775,12 @@
         card.innerHTML = `
           <div class="cake-card-img-wrap">
             ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-            ${cake.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+            ${isItemCurrentlyStockOut(cake) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
             <button type="button" class="btn-card-download" title="Download Photo">
               <ion-icon name="download-outline"></ion-icon>
             </button>
             <span class="cake-card-badge">${catIcon} ${catName}</span>
-            <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${cake.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+            <img src="${cake.uri || ''}" alt="${cakeName}" loading="${index < 4 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${isItemCurrentlyStockOut(cake) ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           </div>
           <div class="cake-card-body">
             <div>
@@ -15683,7 +15794,7 @@
               </div>
             </div>
             <div class="cake-card-btn-row">
-              ${cake.isStockOut ? `
+              ${isItemCurrentlyStockOut(cake) ? `
                 <button type="button" class="btn-cake-order" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: #ffffff !important; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);">
                   <ion-icon name="calendar-outline" style="font-size: 13px;"></ion-icon>
                   Pre-Order for Tomorrow
@@ -15952,8 +16063,9 @@
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
+          ${isItemCurrentlyStockOut(photo) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
           ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
-          <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';">
+          <img src="${photo.uri}" alt="${catName}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${isItemCurrentlyStockOut(photo) ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${catIcon}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${catName}</span>
@@ -16180,12 +16292,12 @@
         card.className = "photo-item-card";
         card.innerHTML = `
           ${isRecent ? '<span class="recent-badge"><ion-icon name="flash" style="font-size: 10px; margin-right: 2px;"></ion-icon> Recent</span>' : ""}
-          ${photo.isStockOut ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
+          ${isItemCurrentlyStockOut(photo) ? '<span style="position: absolute; top: 8px; right: 46px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">Stock Out</span>' : ''}
           ${(photo.pricePerKg && Number(photo.pricePerKg) > 0) ? `<span style="position: absolute; top: 8px; left: 8px; background: rgba(190, 18, 60, 0.92); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.25);">✨ ₹${photo.pricePerKg}/Kg • ${photo.cakeType || 'Full Fondant'}</span>` : ''}
           <button type="button" class="btn-card-download" title="Download Photo">
             <ion-icon name="download-outline"></ion-icon>
           </button>
-          <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${photo.isStockOut ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
+          <img src="${photo.uri}" alt="${cat.name}" loading="${index < 6 ? 'eager' : 'lazy'}" decoding="async" fetchpriority="${index < 2 ? 'high' : 'auto'}" onerror="this.onerror=null; this.src=window.FALLBACK_CAKE_SVG || 'splash.jpg';" style="${isItemCurrentlyStockOut(photo) ? 'opacity: 0.7; filter: grayscale(40%);' : ''}">
           <div class="photo-overlay-tag">
             <span class="photo-tag-icon">${getCategoryIcon(cat.icon)}</span>
             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.name}</span>
@@ -16831,7 +16943,7 @@
                 <div class="admin-photo-thumb-wrap">
                   <img src="${photo.uri}" alt="Cake photo" loading="lazy">
                   <span class="admin-photo-order-badge">#${pIdx + 1}</span>
-                  ${photo.isStockOut ? '<span style="position: absolute; bottom: 4px; left: 4px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 8.5px; font-weight: 800; padding: 1px 5px; border-radius: 4px; z-index: 2;">OUT OF STOCK</span>' : ''}
+                  ${isItemCurrentlyStockOut(photo) ? '<span style="position: absolute; bottom: 4px; left: 4px; background: rgba(220, 38, 38, 0.95); color: #fff; font-size: 8.5px; font-weight: 800; padding: 1px 5px; border-radius: 4px; z-index: 2;">OUT OF STOCK</span>' : ''}
                   ${isFondant ? `<span style="position: absolute; top: 4px; right: 4px; background: rgba(190, 18, 60, 0.95); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; z-index: 2; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">₹${ratePerKg}/Kg Fondant</span>` : ''}
                 </div>
                 <div class="admin-photo-meta">
@@ -17233,7 +17345,7 @@
           const smallP = cake.smallPrice || cake.price || 450;
           const largeP = cake.largePrice || (cake.smallPrice ? Math.round(cake.smallPrice * 1.75) : 800);
 
-          const isStockOut = Boolean(cake.isStockOut);
+          const isStockOut = isItemCurrentlyStockOut(cake);
           const item = document.createElement("div");
           item.className = "admin-cake-manage-row";
           item.innerHTML = `
@@ -17311,8 +17423,11 @@
         const isAndroid = /Android/i.test(ua);
         const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isDesktop = !isAndroid && !isIOS;
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        return { isWindows, isMac, isAndroid, isIOS, isDesktop, isStandalone };
+        const isInAppBrowser = /(FBAN|FBAV|Instagram|WhatsApp|Line|Twitter|Snapchat)/i.test(ua);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.navigator.standalone === true ||
+                             localStorage.getItem('cs_app_installed') === 'true';
+        return { isWindows, isMac, isAndroid, isIOS, isDesktop, isInAppBrowser, isStandalone };
       }
 
       function updateInstallButtonsUI() {
@@ -17328,7 +17443,7 @@
           label = "✓ Installed";
           iconName = "checkmark-circle";
         } else if (plat.isWindows) {
-          label = "Install on PC";
+          label = window.deferredInstallPrompt ? "Install App" : "Install on PC";
           iconName = "desktop-outline";
         } else if (plat.isMac) {
           label = "Install on Mac";
@@ -17346,10 +17461,16 @@
           const icn = btn.querySelector(".smart-install-icon, ion-icon");
           if (lbl) lbl.textContent = label;
           if (icn) icn.setAttribute("name", iconName);
+          if (plat.isStandalone) {
+            btn.style.background = "#16a34a";
+          }
         });
 
         if (bannerTitle && bannerSub) {
-          if (plat.isWindows || plat.isMac) {
+          if (plat.isStandalone) {
+            bannerTitle.textContent = "Cake Studio Installed";
+            bannerSub.textContent = "Running as high-performance installed app";
+          } else if (plat.isWindows || plat.isMac) {
             bannerTitle.textContent = "Install Cake Studio on Desktop";
             bannerSub.textContent = "Instant 1-click launch from your Desktop taskbar";
           } else {
@@ -17360,6 +17481,18 @@
       }
       window.updateInstallButtonsUI = updateInstallButtonsUI;
 
+      function copyAppWebLink() {
+        const url = window.location.origin + window.location.pathname;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url)
+            .then(() => showToast("📋 App link copied! Open in Chrome or Safari to install."))
+            .catch(() => prompt("Copy this link to open in Chrome/Safari:", url));
+        } else {
+          prompt("Copy this link to open in Chrome/Safari:", url);
+        }
+      }
+      window.copyAppWebLink = copyAppWebLink;
+
       function openSmartInstallModal() {
         const plat = getClientPlatform();
         const modal = document.getElementById("modalSmartInstall");
@@ -17369,50 +17502,68 @@
         const btnShortcut = document.getElementById("btnDownloadDesktopShortcut");
         if (!modal) return;
 
+        let inAppAlertHtml = "";
+        if (plat.isInAppBrowser) {
+          inAppAlertHtml = `
+            <div style="background: #fffbeb; border: 1.5px solid #fef3c7; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 11.5px; color: #92400e; display: flex; align-items: flex-start; gap: 8px;">
+              <ion-icon name="alert-circle" style="font-size: 18px; color: #d97706; flex-shrink: 0; margin-top: 1px;"></ion-icon>
+              <div>
+                <strong>Notice:</strong> You are currently viewing inside WhatsApp / Instagram browser. To install the app to your Home screen:
+                <br>Tap the <strong>⋮</strong> (or ⋯) menu at top right and choose <strong>"Open in Chrome"</strong> (or Safari).
+              </div>
+            </div>
+          `;
+        }
+
         if (guide) {
           if (plat.isWindows) {
-            guide.innerHTML = `
-              <div style="font-weight: 700; color: #111827; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                <ion-icon name="desktop-outline" style="font-size: 16px; color: var(--primary);"></ion-icon> Windows PC Installation
+            guide.innerHTML = inAppAlertHtml + `
+              <div style="font-weight: 700; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <ion-icon name="desktop-outline" style="font-size: 18px; color: var(--primary);"></ion-icon>
+                <span>Windows PC 1-Click Install</span>
               </div>
-              <ol style="margin-left: 18px; padding-left: 0;">
-                <li>Click <strong>Install on Windows PC</strong> below to launch the automatic installer.</li>
-                <li>Or look for the <strong>Install (⊕)</strong> icon on the right side of your browser address bar.</li>
-                <li>You can also click <strong>Download Desktop Shortcut</strong> to create a 1-click Desktop icon!</li>
+              <ol style="margin-left: 18px; padding-left: 0; line-height: 1.8;">
+                <li>Look for the <strong>Install App (⊕)</strong> icon on the right side of your Chrome / Edge address bar.</li>
+                <li>Or click <strong>Download Desktop Shortcut</strong> below for an instant 1-click desktop launcher!</li>
+                <li>Or click browser menu (<strong>⋮</strong>) &rarr; <strong>Save and share</strong> &rarr; <strong>Install Cake Studio...</strong></li>
               </ol>
             `;
             if (btnShortcut) btnShortcut.style.display = "flex";
           } else if (plat.isMac) {
-            guide.innerHTML = `
-              <div style="font-weight: 700; color: #111827; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                <ion-icon name="desktop-outline" style="font-size: 16px; color: var(--primary);"></ion-icon> Mac Desktop Installation
+            guide.innerHTML = inAppAlertHtml + `
+              <div style="font-weight: 700; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <ion-icon name="desktop-outline" style="font-size: 18px; color: var(--primary);"></ion-icon>
+                <span>Mac Desktop Installation</span>
               </div>
-              <ol style="margin-left: 18px; padding-left: 0;">
-                <li>Click <strong>Install App</strong> below to install to macOS Applications and Dock.</li>
-                <li>In Chrome/Safari, click <strong>File > Add to Dock</strong> or address bar Install icon.</li>
+              <ol style="margin-left: 18px; padding-left: 0; line-height: 1.8;">
+                <li>Click <strong>Install App</strong> or address bar <strong>(⊕)</strong> icon to add to Applications.</li>
+                <li>In Safari on macOS: Click <strong>File &rarr; Add to Dock</strong>.</li>
               </ol>
             `;
             if (btnShortcut) btnShortcut.style.display = "none";
           } else if (plat.isIOS) {
-            guide.innerHTML = `
-              <div style="font-weight: 700; color: #111827; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                <ion-icon name="logo-apple" style="font-size: 16px; color: var(--primary);"></ion-icon> iPhone / iPad Installation
+            guide.innerHTML = inAppAlertHtml + `
+              <div style="font-weight: 700; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <ion-icon name="logo-apple" style="font-size: 18px; color: var(--primary);"></ion-icon>
+                <span>iPhone / iPad Installation</span>
               </div>
-              <ol style="margin-left: 18px; padding-left: 0;">
-                <li>Tap the <strong>Share</strong> button (<ion-icon name="share-outline" style="vertical-align: middle;"></ion-icon>) at the bottom of Safari.</li>
-                <li>Scroll down and tap <strong>Add to Home Screen</strong> (<ion-icon name="add-circle-outline" style="vertical-align: middle;"></ion-icon>).</li>
-                <li>Tap <strong>Add</strong> at the top right to complete!</li>
+              <ol style="margin-left: 18px; padding-left: 0; line-height: 1.8;">
+                <li>Tap the <strong>Share</strong> button (<ion-icon name="share-outline" style="vertical-align: middle; font-size: 14px;"></ion-icon>) at the bottom of Safari.</li>
+                <li>Scroll down and tap <strong>"Add to Home Screen"</strong> (<ion-icon name="add-circle-outline" style="vertical-align: middle; font-size: 14px;"></ion-icon>).</li>
+                <li>Tap <strong>Add</strong> at top right to complete!</li>
               </ol>
             `;
             if (btnShortcut) btnShortcut.style.display = "none";
           } else {
-            guide.innerHTML = `
-              <div style="font-weight: 700; color: #111827; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-                <ion-icon name="logo-android" style="font-size: 16px; color: #16a34a;"></ion-icon> Android Phone Installation
+            guide.innerHTML = inAppAlertHtml + `
+              <div style="font-weight: 700; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <ion-icon name="logo-android" style="font-size: 18px; color: #16a34a;"></ion-icon>
+                <span>Android Installation Steps</span>
               </div>
-              <ol style="margin-left: 18px; padding-left: 0;">
-                <li>Click <strong>Install App</strong> below to add Cake Studio to your Apps list.</li>
-                <li>Or tap Chrome menu (<strong>⋮</strong>) and select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+              <ol style="margin-left: 18px; padding-left: 0; line-height: 1.8;">
+                <li>Tap the Chrome menu (<strong>⋮</strong>) at the top-right corner.</li>
+                <li>Select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                <li>Tap <strong>Install</strong> to add Cake Studio to your app drawer!</li>
               </ol>
             `;
             if (btnShortcut) btnShortcut.style.display = "none";
@@ -17420,7 +17571,17 @@
         }
 
         if (btnExecText) {
-          btnExecText.textContent = plat.isWindows ? "Install on Windows PC" : (plat.isIOS ? "Got it! Show Steps" : "Install App");
+          if (window.deferredInstallPrompt) {
+            btnExecText.textContent = "Install Cake Studio Now";
+          } else if (plat.isWindows) {
+            btnExecText.textContent = "Download 1-Click Desktop Shortcut";
+          } else if (plat.isInAppBrowser) {
+            btnExecText.textContent = "Copy App Link (Open in Chrome)";
+          } else if (plat.isIOS) {
+            btnExecText.textContent = "Got It (Follow Steps Above)";
+          } else {
+            btnExecText.textContent = "Copy App Link to Open in Chrome";
+          }
         }
 
         modal.style.display = "flex";
@@ -17436,17 +17597,26 @@
           try {
             window.deferredInstallPrompt.prompt();
             const choice = await window.deferredInstallPrompt.userChoice;
-            if (choice.outcome === 'accepted') {
+            if (choice && choice.outcome === 'accepted') {
               window.deferredInstallPrompt = null;
+              try { localStorage.setItem('cs_app_installed', 'true'); } catch(e){}
               updateInstallButtonsUI();
               closeSmartInstallModal();
               showToast("Cake Studio installed successfully! 🎉");
+              return;
             }
-            return;
           } catch (e) {
             console.warn("Native prompt error:", e);
           }
         }
+
+        const plat = getClientPlatform();
+        if (plat.isWindows && !window.deferredInstallPrompt) {
+          // On PC without active prompt, open modal with shortcut option
+          openSmartInstallModal();
+          return;
+        }
+
         openSmartInstallModal();
       }
 
@@ -17500,7 +17670,21 @@
             closeSmartInstallModal();
           }
         });
-        document.getElementById("btnExecuteInstall")?.addEventListener("click", triggerAppInstall);
+        document.getElementById("btnExecuteInstall")?.addEventListener("click", () => {
+          if (window.deferredInstallPrompt) {
+            triggerAppInstall();
+            return;
+          }
+          const plat = getClientPlatform();
+          if (plat.isWindows) {
+            downloadDesktopShortcut();
+            closeSmartInstallModal();
+          } else if (plat.isInAppBrowser || plat.isAndroid) {
+            copyAppWebLink();
+          } else {
+            closeSmartInstallModal();
+          }
+        });
         document.getElementById("btnDownloadDesktopShortcut")?.addEventListener("click", downloadDesktopShortcut);
 
         // Always show top install banner permanently unless already running in standalone mode
@@ -17638,7 +17822,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=24').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=25').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
@@ -17939,7 +18123,7 @@
         if (newImgNote) newImgNote.style.display = "none";
 
         // Stock Out Toggle
-        const isStockOut = Boolean(item.isStockOut);
+        const isStockOut = isItemCurrentlyStockOut(item);
         const stockToggle = document.getElementById("adminEditStockOutToggle");
         const stockLabel = document.getElementById("adminEditStockOutLabel");
         const thumbStockBadge = document.getElementById("adminEditThumbStockBadge");
@@ -18054,9 +18238,18 @@
           const timeInput = document.getElementById("adminEditStockAvailableTime");
           const stockAvailableTime = timeInput ? (timeInput.value || "10:00") : "10:00";
 
+          let stockAutoInTimestamp = null;
+          let stockOutTime = null;
+          if (isStockOut) {
+            stockOutTime = Date.now();
+            stockAutoInTimestamp = getTomorrow10AmIstTimestamp(Date.now());
+          }
+
           const updatedDoc = {
             categoryId: newCatId,
             isStockOut: isStockOut,
+            stockOutTime: stockOutTime,
+            stockAutoInTimestamp: stockAutoInTimestamp,
             stockAvailableTime: stockAvailableTime,
             updatedAt: Date.now(),
           };
@@ -18798,7 +18991,7 @@
         } catch(e) {}
 
         // Stock Out handling in modal
-        const isStockOut = Boolean(photo.isStockOut);
+        const isStockOut = isItemCurrentlyStockOut(photo);
         const availTimeStr = photo.stockAvailableTime || "10:00";
         const availTimeFmt = formatTime12Hour(availTimeStr);
 
@@ -19092,7 +19285,7 @@
 
         const btnConfirmText = document.getElementById("btnConfirmBuyNowText");
         const confirmBuyBtn = document.getElementById("btnConfirmBuyNow");
-        if (buyNowTargetPhoto && buyNowTargetPhoto.isStockOut) {
+        if (buyNowTargetPhoto && isItemCurrentlyStockOut(buyNowTargetPhoto)) {
           const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
           const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
           const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
@@ -19598,7 +19791,7 @@
           const custPhoneInput = document.getElementById("buyNowCustomerPhone");
           const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
 
-          if (buyNowTargetPhoto.isStockOut) {
+          if (isItemCurrentlyStockOut(buyNowTargetPhoto)) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
             const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
@@ -19828,7 +20021,7 @@
             msg += `──────────────────────────\n`;
           }
           msg += `📦 *Order Details:*\n`;
-          if (buyNowTargetPhoto.isStockOut) {
+          if (isItemCurrentlyStockOut(buyNowTargetPhoto)) {
             const custDate = document.getElementById("buyNowDeliveryDate")?.value || "";
             const custTime = document.getElementById("buyNowDeliveryTime")?.value || "";
             const slotCheck = validateStockOutDeliverySlot(buyNowTargetPhoto, custDate, custTime, Boolean(isCake && isBuyNowPhotoCakeActive));
@@ -19872,7 +20065,7 @@
             msg += `• *Base Cake Price:* ₹${priceInfo.basePrice}\n`;
           }
           if (isCake && isBuyNowPhotoCakeActive) {
-            const photoP = getPhotoCakePricing(custDate, custTime, buyNowTargetPhoto?.isStockOut);
+            const photoP = getPhotoCakePricing(custDate, custTime, isItemCurrentlyStockOut(buyNowTargetPhoto));
             msg += `• *Edible Photo Cake Print:* +₹${photoP.charge} ${photoP.isRush ? '(⚡ Express Rush: Ordered after 3 PM today / before 3:30 PM tomorrow)' : '(Standard)'}\n`;
             if (photoP.isRush) {
               msg += `  _(Standard delivery tomorrow after 3:30 PM or future dates is only ₹250)_\n`;
@@ -20067,7 +20260,7 @@
           if (dAddrSec) dAddrSec.style.display = "block";
           if (dPickupSec) dPickupSec.style.display = "none";
         } catch(e) {}
-        const directIsStockOut = Boolean(photo.isStockOut);
+        const directIsStockOut = isItemCurrentlyStockOut(photo);
         const directAvailTimeStr = photo.stockAvailableTime || "10:00";
         const directAvailTimeFmt = formatTime12Hour(directAvailTimeStr);
 
@@ -20236,7 +20429,7 @@
         checkDirectCakeMinOrderQtyWarning();
 
         const directConfirmBtn = document.getElementById("btnDirectCakeOrderWhatsApp");
-        if (directCakeTargetPhoto && directCakeTargetPhoto.isStockOut) {
+        if (directCakeTargetPhoto && isItemCurrentlyStockOut(directCakeTargetPhoto)) {
           const directDate = document.getElementById("directCakeDeliveryDate")?.value || "";
           const directTime = document.getElementById("directCakeDeliveryTime")?.value || "";
           const slotCheck = validateStockOutDeliverySlot(directCakeTargetPhoto, directDate, directTime);
@@ -20481,7 +20674,7 @@
           );
           const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
 
-          if (directCakeTargetPhoto.isStockOut) {
+          if (isItemCurrentlyStockOut(directCakeTargetPhoto)) {
             const directDate = document.getElementById("directCakeDeliveryDate")?.value || "";
             const directTime = document.getElementById("directCakeDeliveryTime")?.value || "";
             const slotCheck = validateStockOutDeliverySlot(directCakeTargetPhoto, directDate, directTime);
@@ -20690,7 +20883,7 @@
             msg += `──────────────────────────\n`;
           }
           msg += `📦 *Order Details:*\n`;
-          if (directCakeTargetPhoto.isStockOut) {
+          if (isItemCurrentlyStockOut(directCakeTargetPhoto)) {
             const availFmt = formatTime12Hour(directCakeTargetPhoto.stockAvailableTime || "10:00");
             msg += `• *Order Type:* 🕒 Advance Pre-Order (Available tomorrow from ${availFmt} onwards)\n`;
           }
@@ -23611,6 +23804,7 @@ You MUST respond with ONLY valid JSON (no markdown fences, no extra text). The J
 
       // Initialize App with Immediate Cache Hydration & Parallel SWR Background Sync
       hydrateCacheSync();
+      runStockOutAutoSweep();
       renderCurrentActiveTab();
       initSplashScreen();
       hydrateCacheAsync().then(() => {
