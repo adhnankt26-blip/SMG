@@ -12374,6 +12374,11 @@
             firebase.initializeApp(firebaseConfig);
           }
           db = firebase.firestore();
+          try {
+            db.enablePersistence({ synchronizeTabs: true }).catch((pErr) => {
+              console.warn("Firestore offline persistence notice:", pErr);
+            });
+          } catch (pEx) {}
           merchantCustomerApp = firebase.apps.find(
             (a) => a.name === "merchantCustomerApp",
           );
@@ -12534,7 +12539,7 @@
         DB_NAME: "CakeStudioCacheDB",
         DB_VERSION: 1,
         STORE_NAME: "cache_store",
-        TTL: 10 * 60 * 1000, // 10 minutes short TTL for fast revalidation
+        TTL: 30 * 24 * 60 * 60 * 1000, // 30 days permanent SWR cache
         _dbPromise: null,
 
         openDB() {
@@ -12569,10 +12574,8 @@
                 const req = store.get(key);
                 req.onsuccess = () => {
                   const rec = req.result;
-                  if (!rec) return resolve(null);
-                  if (rec.cachedAt && (Date.now() - rec.cachedAt > (rec.ttl || this.TTL))) {
-                    return resolve(null);
-                  }
+                  if (!rec || !rec.data) return resolve(null);
+                  // True Stale-While-Revalidate: ALWAYS serve cached photos/cakes instantly!
                   resolve(rec.data);
                 };
                 req.onerror = () => resolve(null);
@@ -12600,15 +12603,23 @@
             const raw = localStorage.getItem("cs_cache_" + key);
             if (!raw) return null;
             const item = JSON.parse(raw);
-            if (Date.now() - item.cachedAt > (item.ttl || this.TTL)) return null;
-            return item.data;
+            return item ? item.data : null;
           } catch (e) { return null; }
         },
 
         setSync(key, data, ttlMs = this.TTL) {
           try {
-            localStorage.setItem("cs_cache_" + key, JSON.stringify({ data, cachedAt: Date.now(), ttl: ttlMs }));
-          } catch (e) {}
+            const str = JSON.stringify({ data, cachedAt: Date.now(), ttl: ttlMs });
+            // Guard against QuotaExceededError in mobile browsers (< 1MB)
+            if (str.length < 1000000) {
+              localStorage.setItem("cs_cache_" + key, str);
+            }
+          } catch (e) {
+            try {
+              localStorage.removeItem("cs_cache_recent_photos");
+              localStorage.removeItem("cs_cache_cakes_summary");
+            } catch (ce) {}
+          }
         }
       };
 
@@ -14890,6 +14901,34 @@
           }, { once: true });
           return;
         }
+
+        // Fast bootstrap: If allPhotos is empty, fetch top 30 recent photos immediately (~1 sec)
+        if (!allPhotos || allPhotos.length === 0) {
+          db.collection("photos")
+            .orderBy("timestamp", "desc")
+            .limit(30)
+            .get()
+            .then((snap) => {
+              if (!snap.empty && (!allPhotos || allPhotos.length === 0)) {
+                const recents = [];
+                snap.forEach((doc) => {
+                  const data = doc.data() || {};
+                  if (!data.id) data.id = doc.id;
+                  if (!data.isCakeCatalogItem && !String(data.id).startsWith("cake_")) {
+                    recents.push(data);
+                  }
+                });
+                if (recents.length > 0 && (!allPhotos || allPhotos.length === 0)) {
+                  allPhotos = recents;
+                  markTabsDirty("screenGallery", "screenCategoryDetail", "screenCategory");
+                  renderCurrentActiveTab();
+                  updateStats();
+                }
+              }
+            })
+            .catch(() => {});
+        }
+
         // Listen to 'photos' collection (Gallery photos only)
         db.collection("photos").onSnapshot((snap) => {
           const list = [];
@@ -15818,6 +15857,16 @@
         grid.innerHTML = "";
 
         if (filtered.length === 0) {
+          if (!catalogCakes || catalogCakes.length === 0) {
+            grid.innerHTML = `
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+            `;
+            if (metaEl) metaEl.textContent = "Loading cakes... ✨";
+            return;
+          }
           grid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: #9ca3af;">
               <div style="font-size: 38px; margin-bottom: 8px;">
@@ -16087,6 +16136,18 @@
         }
 
         if (photosToDisplay.length === 0) {
+          if (!allPhotos || allPhotos.length === 0) {
+            grid.innerHTML = `
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+              <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+            `;
+            if (metaEl) metaEl.textContent = "Loading photos... ✨";
+            return;
+          }
           grid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 48px 16px; color: #9ca3af;">
               <div style="font-size: 36px; margin-bottom: 8px;"><ion-icon name="search-outline" style="font-size: 38px; color: #9ca3af;"></ion-icon></div>
@@ -16190,8 +16251,6 @@
         currentDetailCategoryObj = cat;
         const catPhotos = allPhotos.filter((p) => p.categoryId === cat.id);
         document.getElementById("detailCatTitle").textContent = cat.name;
-        document.getElementById("detailCatSubtitle").textContent =
-          `${catPhotos.length} ${catPhotos.length === 1 ? "photo" : "photos"}`;
 
         const grid = document.getElementById("categoryDetailPhotosGrid");
         grid.innerHTML = "";
@@ -16201,9 +16260,65 @@
           catDetailObserver = null;
         }
 
-        catDetailCurrentPhotos = catPhotos;
-        catDetailRenderedCount = 0;
-        appendMoreCategoryDetail();
+        if (catPhotos.length > 0) {
+          document.getElementById("detailCatSubtitle").textContent =
+            `${catPhotos.length} ${catPhotos.length === 1 ? "photo" : "photos"}`;
+          catDetailCurrentPhotos = catPhotos;
+          catDetailRenderedCount = 0;
+          appendMoreCategoryDetail();
+        } else {
+          // If no photos in memory yet, show instant skeleton shimmer cards while fast-fetching this category
+          document.getElementById("detailCatSubtitle").textContent = "Loading photos... ✨";
+          grid.innerHTML = `
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+            <div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-title"></div><div class="skeleton-sub"></div></div>
+          `;
+          if (db && cat.id) {
+            db.collection("photos")
+              .where("categoryId", "==", cat.id)
+              .get()
+              .then((snap) => {
+                if (!snap.empty) {
+                  const fetched = [];
+                  snap.forEach((doc) => {
+                    const d = doc.data() || {};
+                    if (!d.id) d.id = doc.id;
+                    fetched.push(d);
+                  });
+                  fetched.forEach((fp) => {
+                    if (!allPhotos.some((p) => p.id === fp.id)) {
+                      allPhotos.push(fp);
+                    }
+                  });
+                  allPhotos.sort((a, b) => {
+                    const orderA = a.order !== undefined ? Number(a.order) : 999999;
+                    const orderB = b.order !== undefined ? Number(b.order) : 999999;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                  });
+                  CakeStudioCache.set("photos", allPhotos);
+                  if (currentDetailCategoryObj && currentDetailCategoryObj.id === cat.id) {
+                    const updatedCatPhotos = allPhotos.filter((p) => p.categoryId === cat.id);
+                    document.getElementById("detailCatSubtitle").textContent =
+                      `${updatedCatPhotos.length} ${updatedCatPhotos.length === 1 ? "photo" : "photos"}`;
+                    grid.innerHTML = "";
+                    catDetailCurrentPhotos = updatedCatPhotos;
+                    catDetailRenderedCount = 0;
+                    appendMoreCategoryDetail();
+                  }
+                } else {
+                  document.getElementById("detailCatSubtitle").textContent = "0 photos";
+                  grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 13px; font-weight: 700;">No photos in this category yet.</div>`;
+                }
+              })
+              .catch(() => {
+                document.getElementById("detailCatSubtitle").textContent = "0 photos";
+                grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 13px; font-weight: 700;">No photos available.</div>`;
+              });
+          }
+        }
       }
 
       // Global passive scroll stream fallback (works across all browsers)
@@ -17523,7 +17638,7 @@
         // Register Service Worker & Auto-Reload on Updates
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js?v=23').then((reg) => {
+            navigator.serviceWorker.register('sw.js?v=24').then((reg) => {
               try { reg.update(); } catch(e) {}
             }).catch((err) => {
               console.warn("ServiceWorker registration:", err);
